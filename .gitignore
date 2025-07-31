@@ -1,0 +1,14 @@
+# Aethelo Project
+node_modules/
+.env
+*.log
+*.zip
+.DS_Store
+Thumbs.db
+anaconda3/
+Downloads/
+Documents/
+Pictures/
+Videos/
+Music/
+Desktop/

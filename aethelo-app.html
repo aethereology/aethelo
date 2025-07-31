@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aethelo – Automation Advisor & Demo Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'aethelo-orange': '#FF7F32',
+                        'aethelo-blue': '#40E0D0',
+                        'aethelo-dark': '#1a1a1a',
+                        'aethelo-gray': '#f5f5f5'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .wizard-step {
+            transition: all 0.5s ease;
+        }
+        .phase-indicator {
+            position: relative;
+        }
+        .phase-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            width: 0;
+            height: 0;
+            border-left: 20px solid #40E0D0;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+        }
+        .kpi-card {
+            background: linear-gradient(135deg, #FF7F32 0%, #40E0D0 100%);
+        }
+        .demo-badge {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-aethelo-gray font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-aethelo-orange">
+                            <i class="fas fa-cogs mr-2"></i>Aethelo
+                        </h1>
+                        <p class="text-xs text-gray-500">Automation Advisor & Demo Portal</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="demo-badge bg-aethelo-blue text-white px-3 py-1 rounded-full text-sm font-medium">
+                        DEMO MODE
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-8">
+                <button onclick="showTab('guest')" id="guest-tab" class="py-4 px-1 border-b-2 border-aethelo-orange text-aethelo-orange font-medium text-sm">
+                    <i class="fas fa-user-plus mr-2"></i>Guest Portal
+                </button>
+                <button onclick="showTab('client')" id="client-tab" class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                    <i class="fas fa-dashboard mr-2"></i>Client Portal
+                </button>
+                <button onclick="showTab('admin')" id="admin-tab" class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                    <i class="fas fa-cog mr-2"></i>Admin Panel
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Guest Tab Content -->
+    <div id="guest-content" class="tab-content">
+        <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <!-- Wizard Form -->
+            <div id="wizard-form" class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-aethelo-dark mb-2">Tell us about your business</h2>
+                    <p class="text-gray-600">Get personalized automation recommendations in under 60 seconds</p>
+                </div>
+
+                <form id="intake-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="company-name" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                            <input type="text" id="company-name" name="company-name" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
+                                   placeholder="Your company name">
+                        </div>
+                        <div>
+                            <label for="industry" class="block text-sm font-medium text-gray-700 mb-2">Industry Vertical</label>
+                            <select id="industry" name="industry" required 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent">
+                                <option value="">Select your industry</option>
+                                <option value="restaurant">Restaurant</option>
+                                <option value="clinic">Healthcare/Clinic</option>
+                                <option value="property">Property Management</option>
+                                <option value="salon">Salon/Beauty</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Top Business Pains (select all that apply)</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="pains" value="manual-data-entry" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Too much manual data entry</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="pains" value="customer-follow-up" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Inconsistent customer follow-up</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="pains" value="scheduling-conflicts" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Scheduling conflicts</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="pains" value="inventory-tracking" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Inventory tracking issues</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="pains" value="reporting-delays" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Delayed reporting</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="pains" value="payment-processing" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Payment processing delays</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="daily-volume" class="block text-sm font-medium text-gray-700 mb-2">Daily Volume</label>
+                            <input type="text" id="daily-volume" name="daily-volume" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
+                                   placeholder="e.g., 50 orders, 30 appointments">
+                        </div>
+                        <div>
+                            <label for="current-tools" class="block text-sm font-medium text-gray-700 mb-2">Current Tools</label>
+                            <input type="text" id="current-tools" name="current-tools" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
+                                   placeholder="e.g., Square POS, Excel, QuickBooks">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="contact-info" class="block text-sm font-medium text-gray-700 mb-2">Contact Information</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="email" id="email" name="email" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
+                                   placeholder="Email address">
+                            <input type="tel" id="phone" name="phone" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
+                                   placeholder="Phone number (optional)">
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="bg-aethelo-orange text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors focus:ring-4 focus:ring-orange-200">
+                            <i class="fas fa-magic mr-2"></i>Get My Automation Recommendations
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Section (initially hidden) -->
+            <div id="results-section" class="hidden">
+                <!-- AI Recommendations -->
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <h3 class="text-2xl font-bold text-aethelo-dark mb-6">
+                        <i class="fas fa-lightbulb text-aethelo-orange mr-2"></i>Your Personalized Automation Ideas
+                    </h3>
+                    <div id="recommendations-content" class="space-y-6">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Proposal Draft -->
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <h3 class="text-2xl font-bold text-aethelo-dark mb-6">
+                        <i class="fas fa-file-contract text-aethelo-orange mr-2"></i>Recommended Service Tiers
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="proposal-content">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+                    <div class="text-center mt-8">
+                        <button class="bg-aethelo-blue text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-500 transition-colors mr-4">
+                            <i class="fas fa-calendar mr-2"></i>Book a 15-minute discovery
+                        </button>
+                        <button class="border border-aethelo-orange text-aethelo-orange px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors">
+                            <i class="fas fa-download mr-2"></i>Download Proposal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Tab Content -->
+    <div id="client-content" class="tab-content hidden">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <!-- Demo Notice -->
+            <div class="bg-aethelo-blue bg-opacity-10 border border-aethelo-blue rounded-lg p-4 mb-8">
+                <div class="flex items-center">
+                    <i class="fas fa-info-circle text-aethelo-blue mr-2"></i>
+                    <span class="text-aethelo-blue font-medium">This is a demo portal showing hypothetical project data for illustration purposes.</span>
+                </div>
+            </div>
+
+            <!-- KPI Strip -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="kpi-card text-white rounded-xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white text-opacity-80 text-sm">Automation Runs</p>
+                            <p class="text-3xl font-bold" id="runs-per-day">127</p>
+                            <p class="text-white text-opacity-80 text-xs">per day</p>
+                        </div>
+                        <i class="fas fa-robot text-4xl text-white text-opacity-50"></i>
+                    </div>
+                </div>
+                <div class="kpi-card text-white rounded-xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white text-opacity-80 text-sm">Time Saved</p>
+                            <p class="text-3xl font-bold" id="time-saved">18.5h</p>
+                            <p class="text-white text-opacity-80 text-xs">per week</p>
+                        </div>
+                        <i class="fas fa-clock text-4xl text-white text-opacity-50"></i>
+                    </div>
+                </div>
+                <div class="kpi-card text-white rounded-xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white text-opacity-80 text-sm">Error Rate</p>
+                            <p class="text-3xl font-bold" id="error-rate">0.3%</p>
+                            <p class="text-white text-opacity-80 text-xs">system-wide</p>
+                        </div>
+                        <i class="fas fa-shield-alt text-4xl text-white text-opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Phases -->
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                <h3 class="text-2xl font-bold text-aethelo-dark mb-6">Project: Customer Service Automation</h3>
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <button onclick="changePhase('discovery')" id="phase-discovery" class="phase-btn bg-aethelo-orange text-white px-4 py-2 rounded-lg font-medium">
+                        Discovery
+                    </button>
+                    <button onclick="changePhase('build')" id="phase-build" class="phase-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium">
+                        Build
+                    </button>
+                    <button onclick="changePhase('pilot')" id="phase-pilot" class="phase-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium">
+                        Pilot
+                    </button>
+                    <button onclick="changePhase('iterate')" id="phase-iterate" class="phase-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium">
+                        Iterate
+                    </button>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p id="phase-description" class="text-gray-700">We're gathering requirements and mapping your current processes to identify automation opportunities.</p>
+                </div>
+            </div>
+
+            <!-- Tasks Section -->
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-aethelo-dark">Project Tasks</h3>
+                    <button onclick="showAddTaskModal()" class="bg-aethelo-blue text-white px-4 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Add Task
+                    </button>
+                </div>
+                <div id="tasks-container" class="space-y-4">
+                    <!-- Tasks will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Tab Content -->
+    <div id="admin-content" class="tab-content hidden">
+        <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-2xl font-bold text-aethelo-dark mb-6">
+                    <i class="fas fa-tools text-aethelo-orange mr-2"></i>Admin Panel
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Demo Data Management</h4>
+                        <div class="space-y-3">
+                            <button onclick="resetSeedData()" class="w-full bg-aethelo-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors">
+                                <i class="fas fa-refresh mr-2"></i>Reset Seed Data
+                            </button>
+                            <button onclick="updateKPIs()" class="w-full bg-aethelo-blue text-white px-4 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors">
+                                <i class="fas fa-chart-line mr-2"></i>Randomize KPIs
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="border rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">System Status</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Demo Mode:</span>
+                                <span class="text-green-600 font-medium">Active</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Last Reset:</span>
+                                <span class="text-gray-800" id="last-reset">Just now</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Active Users:</span>
+                                <span class="text-gray-800">1 (Demo)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="add-task-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <h4 class="text-xl font-bold text-aethelo-dark mb-4">Add New Task</h4>
+            <form id="add-task-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="task-title" class="block text-sm font-medium text-gray-700 mb-2">Task Title</label>
+                        <input type="text" id="task-title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="task-owner" class="block text-sm font-medium text-gray-700 mb-2">Owner</label>
+                        <input type="text" id="task-owner" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="task-due" class="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
+                        <input type="date" id="task-due" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent">
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button type="submit" class="flex-1 bg-aethelo-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors">
+                        Add Task
+                    </button>
+                    <button type="button" onclick="hideAddTaskModal()" class="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        let currentPhase = 'discovery';
+        let tasks = [
+            { id: 1, title: 'Requirements gathering session', owner: 'Sarah Chen', due: '2024-02-15', status: 'completed' },
+            { id: 2, title: 'Process mapping workshop', owner: 'Mike Johnson', due: '2024-02-18', status: 'completed' },
+            { id: 3, title: 'Technical architecture review', owner: 'Alex Rodriguez', due: '2024-02-22', status: 'in-progress' },
+            { id: 4, title: 'Integration planning', owner: 'Sarah Chen', due: '2024-02-25', status: 'todo' },
+            { id: 5, title: 'Security assessment', owner: 'David Kim', due: '2024-02-28', status: 'todo' },
+            { id: 6, title: 'User interface mockups', owner: 'Emma Wilson', due: '2024-03-02', status: 'todo' },
+            { id: 7, title: 'Database schema design', owner: 'Alex Rodriguez', due: '2024-03-05', status: 'todo' },
+            { id: 8, title: 'API documentation', owner: 'Mike Johnson', due: '2024-03-08', status: 'todo' }
+        ];
+
+        // Seed data for recommendations
+        const sampleRecommendations = [
+            {
+                title: "Automated Customer Follow-up System",
+                problem: "Inconsistent customer communication leads to lost opportunities",
+                steps: ["Set up customer database integration", "Create email/SMS templates", "Configure trigger rules", "Test automation flows"],
+                integrations: ["CRM integration", "Email platform", "SMS service"],
+                impact: "35% increase in customer retention",
+                complexity: "Medium"
+            },
+            {
+                title: "Smart Appointment Scheduling",
+                problem: "Manual scheduling creates conflicts and inefficiencies",
+                steps: ["Calendar system integration", "Availability rules setup", "Automated confirmations", "Rescheduling workflows"],
+                integrations: ["Calendar API", "Payment gateway", "Notification system"],
+                impact: "50% reduction in scheduling conflicts",
+                complexity: "Low"
+            },
+            {
+                title: "Inventory Tracking Automation",
+                problem: "Manual inventory management leads to stockouts and overstocking",
+                steps: ["POS system integration", "Reorder point configuration", "Supplier connection", "Alert setup"],
+                integrations: ["POS system", "Supplier APIs", "Accounting software"],
+                impact: "25% reduction in inventory costs",
+                complexity: "High"
+            }
+        ];
+
+        // Navigation Functions
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active styles from all tabs
+            document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+                tab.classList.remove('border-aethelo-orange', 'text-aethelo-orange');
+                tab.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab content
+            document.getElementById(`${tabName}-content`).classList.remove('hidden');
+            
+            // Add active styles to selected tab
+            const activeTab = document.getElementById(`${tabName}-tab`);
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeTab.classList.add('border-aethelo-orange', 'text-aethelo-orange');
+        }
+
+        // Form Submission
+        document.getElementById('intake-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = {};
+            
+            // Handle regular fields
+            for (let [key, value] of formData.entries()) {
+                if (key === 'pains') {
+                    if (!data[key]) data[key] = [];
+                    data[key].push(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+            
+            // Generate recommendations based on form data
+            generateRecommendations(data);
+            generateProposal(data);
+            
+            // Show results
+            document.getElementById('results-section').classList.remove('hidden');
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        function generateRecommendations(data) {
+            const container = document.getElementById('recommendations-content');
+            container.innerHTML = '';
+            
+            sampleRecommendations.forEach((rec, index) => {
+                const card = document.createElement('div');
+                card.className = 'border border-gray-200 rounded-lg p-6 card-hover';
+                
+                const complexityColor = rec.complexity === 'Low' ? 'green' : 
+                                      rec.complexity === 'Medium' ? 'yellow' : 'red';
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="text-lg font-semibold text-aethelo-dark">${rec.title}</h4>
+                        <span class="bg-${complexityColor}-100 text-${complexityColor}-800 px-2 py-1 rounded-full text-sm font-medium">
+                            ${rec.complexity}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 mb-4">${rec.problem}</p>
+                    <div class="space-y-3">
+                        <div>
+                            <h5 class="font-medium text-gray-800 mb-1">Key Steps:</h5>
+                            <ul class="text-sm text-gray-600 list-disc list-inside">
+                                ${rec.steps.map(step => `<li>${step}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-medium text-gray-800 mb-1">Integrations:</h5>
+                            <div class="flex flex-wrap gap-2">
+                                ${rec.integrations.map(integration => 
+                                    `<span class="bg-aethelo-blue bg-opacity-20 text-aethelo-blue px-2 py-1 rounded text-sm">${integration}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p class="text-green-800 font-medium text-sm">
+                                <i class="fas fa-chart-line mr-1"></i>Estimated Impact: ${rec.impact}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function generateProposal(data) {
+            const container = document.getElementById('proposal-content');
+            container.innerHTML = '';
+            
+            const tiers = [
+                {
+                    name: 'Pilot',
+                    price: '$1,500 setup + $250/mo',
+                    features: ['Single automation workflow', 'Basic integrations', '30-day pilot period', 'Email support'],
+                    timeline: '2-3 weeks',
+                    ideal: 'Test automation with low risk'
+                },
+                {
+                    name: 'Standard',
+                    price: '$4,000 setup + $800/mo',
+                    features: ['3-5 automation workflows', 'Advanced integrations', 'Custom dashboards', 'Priority support'],
+                    timeline: '4-6 weeks',
+                    ideal: 'Comprehensive automation suite'
+                },
+                {
+                    name: 'Pro',
+                    price: '$10,000 setup + $2,000/mo',
+                    features: ['Unlimited workflows', 'Custom development', 'Dedicated success manager', '24/7 support'],
+                    timeline: '8-12 weeks',
+                    ideal: 'Enterprise-grade solution'
+                }
+            ];
+            
+            tiers.forEach((tier, index) => {
+                const card = document.createElement('div');
+                card.className = `border-2 rounded-xl p-6 card-hover ${index === 1 ? 'border-aethelo-orange bg-orange-50' : 'border-gray-200'}`;
+                
+                card.innerHTML = `
+                    <div class="text-center mb-6">
+                        <h4 class="text-xl font-bold text-aethelo-dark mb-2">${tier.name}</h4>
+                        <p class="text-2xl font-bold text-aethelo-orange">${tier.price}</p>
+                        <p class="text-sm text-gray-600 mt-1">${tier.ideal}</p>
+                    </div>
+                    <ul class="space-y-2 mb-6">
+                        ${tier.features.map(feature => 
+                            `<li class="flex items-center text-sm text-gray-700">
+                                <i class="fas fa-check text-green-500 mr-2"></i>${feature}
+                            </li>`
+                        ).join('')}
+                    </ul>
+                    <div class="border-t pt-4">
+                        <p class="text-sm text-gray-600 mb-2">
+                            <i class="fas fa-clock mr-1"></i>Timeline: ${tier.timeline}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            * Pricing is non-binding and subject to final scope assessment
+                        </p>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Project Phase Management
+        function changePhase(phase) {
+            currentPhase = phase;
+            
+            // Update phase buttons
+            document.querySelectorAll('.phase-btn').forEach(btn => {
+                btn.classList.remove('bg-aethelo-orange', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            
+            document.getElementById(`phase-${phase}`).classList.remove('bg-gray-200', 'text-gray-700');
+            document.getElementById(`phase-${phase}`).classList.add('bg-aethelo-orange', 'text-white');
+            
+            // Update phase description
+            const descriptions = {
+                discovery: "We're gathering requirements and mapping your current processes to identify automation opportunities.",
+                build: "Our team is developing and configuring your automation workflows based on the discovery findings.",
+                pilot: "We're running a controlled test of your automation with real data to validate performance and reliability.",
+                iterate: "Based on pilot results, we're refining and optimizing your automation for full deployment."
+            };
+            
+            document.getElementById('phase-description').textContent = descriptions[phase];
+            
+            // Update KPIs based on phase
+            updateKPIsForPhase(phase);
+        }
+
+        function updateKPIsForPhase(phase) {
+            const kpis = {
+                discovery: { runs: 0, timeSaved: '0h', errorRate: 'N/A' },
+                build: { runs: 23, timeSaved: '3.2h', errorRate: '2.1%' },
+                pilot: { runs: 89, timeSaved: '12.5h', errorRate: '0.8%' },
+                iterate: { runs: 127, timeSaved: '18.5h', errorRate: '0.3%' }
+            };
+            
+            const phaseData = kpis[phase];
+            document.getElementById('runs-per-day').textContent = phaseData.runs;
+            document.getElementById('time-saved').textContent = phaseData.timeSaved;
+            document.getElementById('error-rate').textContent = phaseData.errorRate;
+        }
+
+        // Task Management
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const taskCard = document.createElement('div');
+                taskCard.className = 'border border-gray-200 rounded-lg p-4 flex items-center justify-between';
+                
+                const statusColors = {
+                    'completed': 'bg-green-100 text-green-800',
+                    'in-progress': 'bg-blue-100 text-blue-800',
+                    'todo': 'bg-gray-100 text-gray-800'
+                };
+                
+                const statusIcons = {
+                    'completed': 'fas fa-check-circle',
+                    'in-progress': 'fas fa-clock',
+                    'todo': 'fas fa-circle'
+                };
+                
+                taskCard.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <button onclick="toggleTaskStatus(${task.id})" class="text-lg ${task.status === 'completed' ? 'text-green-500' : 'text-gray-400'} hover:text-aethelo-orange transition-colors">
+                            <i class="${statusIcons[task.status]}"></i>
+                        </button>
+                        <div>
+                            <h5 class="font-medium text-gray-800 ${task.status === 'completed' ? 'line-through' : ''}">${task.title}</h5>
+                            <p class="text-sm text-gray-600">Assigned to: ${task.owner} • Due: ${task.due}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColors[task.status]}">
+                            ${task.status.replace('-', ' ').toUpperCase()}
+                        </span>
+                        <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 transition-colors">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(taskCard);
+            });
+        }
+
+        function toggleTaskStatus(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const statusCycle = { 'todo': 'in-progress', 'in-progress': 'completed', 'completed': 'todo' };
+                task.status = statusCycle[task.status];
+                renderTasks();
+            }
+        }
+
+        function deleteTask(taskId) {
+            tasks = tasks.filter(t => t.id !== taskId);
+            renderTasks();
+        }
+
+        function showAddTaskModal() {
+            document.getElementById('add-task-modal').classList.remove('hidden');
+            document.getElementById('add-task-modal').classList.add('flex');
+        }
+
+        function hideAddTaskModal() {
+            document.getElementById('add-task-modal').classList.add('hidden');
+            document.getElementById('add-task-modal').classList.remove('flex');
+            document.getElementById('add-task-form').reset();
+        }
+
+        document.getElementById('add-task-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('task-title').value;
+            const owner = document.getElementById('task-owner').value;
+            const due = document.getElementById('task-due').value;
+            
+            const newTask = {
+                id: Math.max(...tasks.map(t => t.id)) + 1,
+                title,
+                owner,
+                due,
+                status: 'todo'
+            };
+            
+            tasks.push(newTask);
+            renderTasks();
+            hideAddTaskModal();
+        });
+
+        // Admin Functions
+        function resetSeedData() {
+            tasks = [
+                { id: 1, title: 'Requirements gathering session', owner: 'Sarah Chen', due: '2024-02-15', status: 'completed' },
+                { id: 2, title: 'Process mapping workshop', owner: 'Mike Johnson', due: '2024-02-18', status: 'completed' },
+                { id: 3, title: 'Technical architecture review', owner: 'Alex Rodriguez', due: '2024-02-22', status: 'in-progress' },
+                { id: 4, title: 'Integration planning', owner: 'Sarah Chen', due: '2024-02-25', status: 'todo' },
+                { id: 5, title: 'Security assessment', owner: 'David Kim', due: '2024-02-28', status: 'todo' },
+                { id: 6, title: 'User interface mockups', owner: 'Emma Wilson', due: '2024-03-02', status: 'todo' },
+                { id: 7, title: 'Database schema design', owner: 'Alex Rodriguez', due: '2024-03-05', status: 'todo' },
+                { id: 8, title: 'API documentation', owner: 'Mike Johnson', due: '2024-03-08', status: 'todo' }
+            ];
+            
+            currentPhase = 'discovery';
+            changePhase('discovery');
+            renderTasks();
+            
+            document.getElementById('last-reset').textContent = new Date().toLocaleString();
+            
+            alert('Seed data has been reset successfully!');
+        }
+
+        function updateKPIs() {
+            const runs = Math.floor(Math.random() * 200) + 50;
+            const timeSaved = (Math.random() * 30 + 5).toFixed(1);
+            const errorRate = (Math.random() * 2).toFixed(1);
+            
+            document.getElementById('runs-per-day').textContent = runs;
+            document.getElementById('time-saved').textContent = timeSaved + 'h';
+            document.getElementById('error-rate').textContent = errorRate + '%';
+            
+            alert('KPIs have been updated with random values!');
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTasks();
+            changePhase('discovery');
+        });
+    </script>
+</body>
+</html>
