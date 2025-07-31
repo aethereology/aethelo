@@ -415,6 +415,20 @@
                                     <span class="ml-3 text-sm text-gray-700">📋 Compliance tracking</span>
                                 </label>
                             </div>
+                            
+                            <!-- Custom Pain Points Input -->
+                            <div class="mt-6">
+                                <label for="custom-pains" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Other business challenges not listed above
+                                </label>
+                                <textarea id="custom-pains" name="custom-pains" rows="3" 
+                                          class="input-focus w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all resize-none"
+                                          placeholder="Describe any other specific challenges your business faces that could benefit from automation..."></textarea>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i>Optional: Help us understand your unique challenges for more tailored recommendations
+                                </p>
+                            </div>
+                            
                             <div class="error-message hidden text-red-500 text-sm mt-2"></div>
                         </div>
                     </div>
@@ -1251,11 +1265,12 @@
                 }
             });
 
-            // Validate pain points separately
+            // Validate pain points separately (checkboxes OR custom text)
             const painPoints = document.querySelectorAll('input[name="pains"]:checked');
-            if (painPoints.length === 0) {
+            const customPains = document.getElementById('custom-pains').value.trim();
+            if (painPoints.length === 0 && !customPains) {
                 const painError = document.querySelector('input[name="pains"]').closest('.bg-gradient-to-r').querySelector('.error-message');
-                painError.textContent = 'Please select at least one business pain';
+                painError.textContent = 'Please select at least one business pain or describe your challenges in the text area below';
                 painError.classList.remove('hidden');
                 isFormValid = false;
             }
@@ -1339,6 +1354,28 @@
             } else if (data.industry === 'clinic') {
                 selectedRecommendations[0].title = "Patient Care & Appointment Automation";
                 selectedRecommendations[0].integrations.push("EMR integration", "Insurance systems");
+            }
+            
+            // Add custom recommendation based on custom pains if provided
+            if (data['custom-pains'] && data['custom-pains'].trim()) {
+                const customRecommendation = {
+                    title: "Custom Business Process Automation",
+                    problem: `Address your specific challenge: "${data['custom-pains'].trim()}"`,
+                    steps: [
+                        "Analyze your specific workflow requirements",
+                        "Design custom automation solution",
+                        "Implement tailored integrations",
+                        "Test and validate custom processes",
+                        "Deploy and monitor performance"
+                    ],
+                    integrations: ["Custom API development", "Workflow management", "Business intelligence", "Process optimization"],
+                    impact: "Significant improvement in your specific business challenges",
+                    complexity: "Medium",
+                    estimatedSavings: "$2,000-5,000/month",
+                    implementationTime: "4-8 weeks",
+                    roi: "250-400%"
+                };
+                selectedRecommendations.push(customRecommendation);
             }
             
             selectedRecommendations.forEach((rec, index) => {
