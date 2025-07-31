@@ -21,7 +21,7 @@ A comprehensive web application that helps businesses discover automation opport
 - Clear scope, timeline, and feature comparison for each tier
 
 ### 🏢 Interactive Client Portal Demo
-- Project phases: Discovery → Build → Pilot → Iterate
+- Project phases: Discovery → Build → Pilot → Iterate  
 - Task management with owners, due dates, and status tracking
 - Live KPI dashboard (runs/day, time saved/week, error rate)
 - Interactive features: add/complete tasks, change project phases
