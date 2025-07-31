@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aethelo – Automation Advisor & Demo Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -13,337 +15,842 @@
                         'aethelo-orange': '#FF7F32',
                         'aethelo-blue': '#40E0D0',
                         'aethelo-dark': '#1a1a1a',
-                        'aethelo-gray': '#f5f5f5'
+                        'aethelo-gray': '#f5f5f5',
+                        'aethelo-purple': '#8B5CF6',
+                        'aethelo-green': '#10B981'
                     },
                     fontFamily: {
                         'sans': ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'bounce-in': 'bounceIn 0.8s ease-out',
+                        'progress': 'progress 2s ease-in-out infinite'
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes progress {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
         .card-hover {
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: perspective(1px) translateZ(0);
         }
+        
         .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
+        
         .wizard-step {
-            transition: all 0.5s ease;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
+        .wizard-progress {
+            background: linear-gradient(90deg, #FF7F32, #40E0D0);
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.8s ease-out;
+        }
+        
         .phase-indicator {
             position: relative;
+            overflow: hidden;
         }
-        .phase-indicator::after {
+        
+        .phase-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: progress 2s ease-in-out infinite;
+        }
+        
+        .kpi-card {
+            background: linear-gradient(135deg, #FF7F32 0%, #40E0D0 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        .demo-badge {
+            animation: pulse 2s infinite;
+            background: linear-gradient(45deg, #40E0D0, #8B5CF6);
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            animation: bounce-in 1s ease-out;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 3px rgba(255, 127, 50, 0.1);
+        }
+        
+        .task-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .task-item:hover {
+            background: linear-gradient(90deg, rgba(255, 127, 50, 0.05), rgba(64, 224, 208, 0.05));
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #FF7F32;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .field-error {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .step-indicator {
+            position: relative;
+        }
+        
+        .step-indicator::after {
             content: '';
             position: absolute;
             top: 50%;
-            right: -20px;
+            right: -1rem;
             width: 0;
             height: 0;
-            border-left: 20px solid #40E0D0;
-            border-top: 20px solid transparent;
-            border-bottom: 20px solid transparent;
+            border-left: 8px solid #40E0D0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
         }
-        .kpi-card {
-            background: linear-gradient(135deg, #FF7F32 0%, #40E0D0 100%);
+        
+        .metric-trend {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
-        .demo-badge {
-            animation: pulse 2s infinite;
+        
+        .metric-up {
+            color: #10B981;
+        }
+        
+        .metric-down {
+            color: #EF4444;
         }
     </style>
 </head>
-<body class="bg-aethelo-gray font-sans">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
+<body class="bg-gradient-to-br from-aethelo-gray to-white font-sans">
+    <!-- Enhanced Header with Search and User Menu -->
+    <header class="bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
+                <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
-                        <h1 class="text-2xl font-bold text-aethelo-orange">
-                            <i class="fas fa-cogs mr-2"></i>Aethelo
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-aethelo-orange to-aethelo-blue bg-clip-text text-transparent">
+                            <i class="fas fa-cogs mr-2 text-aethelo-orange"></i>Aethelo
                         </h1>
                         <p class="text-xs text-gray-500">Automation Advisor & Demo Portal</p>
                     </div>
                 </div>
+                
                 <div class="flex items-center space-x-4">
-                    <span class="demo-badge bg-aethelo-blue text-white px-3 py-1 rounded-full text-sm font-medium">
-                        DEMO MODE
-                    </span>
+                    <div class="relative hidden md:block">
+                        <input type="text" id="global-search" placeholder="Search features..." 
+                               class="pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-aethelo-orange focus:border-transparent text-sm">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    
+                    <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <i id="theme-icon" class="fas fa-moon text-gray-600"></i>
+                    </button>
+                    
+                    <div class="relative">
+                        <span class="demo-badge text-white px-3 py-1 rounded-full text-sm font-medium">
+                            <i class="fas fa-flask mr-1"></i>DEMO MODE
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Navigation Tabs -->
-    <nav class="bg-white border-b border-gray-200">
+    <!-- Enhanced Navigation with Progress Indicator -->
+    <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex space-x-8">
-                <button onclick="showTab('guest')" id="guest-tab" class="py-4 px-1 border-b-2 border-aethelo-orange text-aethelo-orange font-medium text-sm">
+            <div class="flex space-x-8 relative">
+                <div class="wizard-progress absolute bottom-0 left-0 h-1 bg-gradient-to-r from-aethelo-orange to-aethelo-blue rounded-full" 
+                     style="width: 33.33%"></div>
+                
+                <button onclick="showTab('guest')" id="guest-tab" class="tab-button py-4 px-1 border-b-2 border-aethelo-orange text-aethelo-orange font-medium text-sm relative">
                     <i class="fas fa-user-plus mr-2"></i>Guest Portal
+                    <span class="step-indicator"></span>
                 </button>
-                <button onclick="showTab('client')" id="client-tab" class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
-                    <i class="fas fa-dashboard mr-2"></i>Client Portal
+                <button onclick="showTab('client')" id="client-tab" class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm relative">
+                    <i class="fas fa-chart-line mr-2"></i>Client Portal
                 </button>
-                <button onclick="showTab('admin')" id="admin-tab" class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                <button onclick="showTab('admin')" id="admin-tab" class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm relative">
                     <i class="fas fa-cog mr-2"></i>Admin Panel
+                </button>
+                <button onclick="showTab('analytics')" id="analytics-tab" class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm relative">
+                    <i class="fas fa-analytics mr-2"></i>Analytics
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- Guest Tab Content -->
-    <div id="guest-content" class="tab-content">
-        <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <!-- Wizard Form -->
-            <div id="wizard-form" class="bg-white rounded-xl shadow-lg p-8 mb-8">
+    <!-- Enhanced Guest Tab Content -->
+    <div id="guest-content" class="tab-content animate-fade-in">
+        <div class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <!-- Progress Steps -->
+            <div class="mb-8">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="flex items-center">
+                        <div class="step-circle w-8 h-8 bg-aethelo-orange text-white rounded-full flex items-center justify-center font-semibold text-sm">1</div>
+                        <span class="ml-2 text-sm font-medium text-aethelo-orange">Tell Us About You</span>
+                    </div>
+                    <div class="w-12 h-1 bg-gray-300 rounded"></div>
+                    <div class="flex items-center">
+                        <div class="step-circle w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-semibold text-sm">2</div>
+                        <span class="ml-2 text-sm font-medium text-gray-500">Get Recommendations</span>
+                    </div>
+                    <div class="w-12 h-1 bg-gray-300 rounded"></div>
+                    <div class="flex items-center">
+                        <div class="step-circle w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-semibold text-sm">3</div>
+                        <span class="ml-2 text-sm font-medium text-gray-500">Review Proposals</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Wizard Form -->
+            <div id="wizard-form" class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 mb-8 animate-slide-up">
                 <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-aethelo-orange to-aethelo-blue rounded-full mb-4">
+                        <i class="fas fa-magic text-white text-2xl"></i>
+                    </div>
                     <h2 class="text-3xl font-bold text-aethelo-dark mb-2">Tell us about your business</h2>
                     <p class="text-gray-600">Get personalized automation recommendations in under 60 seconds</p>
+                    <div class="mt-4 w-24 h-1 bg-gradient-to-r from-aethelo-orange to-aethelo-blue rounded mx-auto"></div>
                 </div>
 
-                <form id="intake-form" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="company-name" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                            <input type="text" id="company-name" name="company-name" required 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
-                                   placeholder="Your company name">
+                <form id="intake-form" class="space-y-8">
+                    <!-- Company Information Section -->
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-building text-aethelo-blue mr-2"></i>Company Information
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="relative">
+                                <label for="company-name" class="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
+                                <input type="text" id="company-name" name="company-name" required 
+                                       class="input-focus w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all"
+                                       placeholder="Your company name">
+                                <div class="error-message hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            <div class="relative">
+                                <label for="industry" class="block text-sm font-medium text-gray-700 mb-2">Industry Vertical *</label>
+                                <select id="industry" name="industry" required 
+                                        class="input-focus w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all">
+                                    <option value="">Select your industry</option>
+                                    <option value="restaurant">🍽️ Restaurant & Food Service</option>
+                                    <option value="clinic">🏥 Healthcare & Medical Clinic</option>
+                                    <option value="property">🏢 Property Management</option>
+                                    <option value="salon">💄 Salon & Beauty Services</option>
+                                    <option value="retail">🛍️ Retail & E-commerce</option>
+                                    <option value="professional">💼 Professional Services</option>
+                                    <option value="manufacturing">🏭 Manufacturing</option>
+                                    <option value="other">🔧 Other</option>
+                                </select>
+                                <div class="error-message hidden text-red-500 text-sm mt-1"></div>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Business Challenges Section -->
+                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-exclamation-triangle text-aethelo-orange mr-2"></i>Business Challenges
+                        </h3>
                         <div>
-                            <label for="industry" class="block text-sm font-medium text-gray-700 mb-2">Industry Vertical</label>
-                            <select id="industry" name="industry" required 
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent">
-                                <option value="">Select your industry</option>
-                                <option value="restaurant">Restaurant</option>
-                                <option value="clinic">Healthcare/Clinic</option>
-                                <option value="property">Property Management</option>
-                                <option value="salon">Salon/Beauty</option>
-                                <option value="other">Other</option>
+                            <label class="block text-sm font-medium text-gray-700 mb-4">Top Business Pains (select all that apply) *</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="manual-data-entry" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">📝 Too much manual data entry</span>
+                                </label>
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="customer-follow-up" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">📞 Inconsistent customer follow-up</span>
+                                </label>
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="scheduling-conflicts" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">📅 Scheduling conflicts</span>
+                                </label>
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="inventory-tracking" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">📦 Inventory tracking issues</span>
+                                </label>
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="reporting-delays" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">📊 Delayed reporting</span>
+                                </label>
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="payment-processing" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">💳 Payment processing delays</span>
+                                </label>
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="communication-gaps" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">💬 Team communication gaps</span>
+                                </label>
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="quality-control" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">🔍 Quality control issues</span>
+                                </label>
+                                <label class="pain-option flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="checkbox" name="pains" value="compliance-tracking" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
+                                    <span class="ml-3 text-sm text-gray-700">📋 Compliance tracking</span>
+                                </label>
+                            </div>
+                            <div class="error-message hidden text-red-500 text-sm mt-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Operations & Tools Section -->
+                    <div class="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-tools text-aethelo-green mr-2"></i>Operations & Tools
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="relative">
+                                <label for="daily-volume" class="block text-sm font-medium text-gray-700 mb-2">Daily Volume *</label>
+                                <input type="text" id="daily-volume" name="daily-volume" required 
+                                       class="input-focus w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all"
+                                       placeholder="e.g., 50 orders, 30 appointments, 100 inquiries">
+                                <div class="error-message hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            <div class="relative">
+                                <label for="current-tools" class="block text-sm font-medium text-gray-700 mb-2">Current Tools *</label>
+                                <input type="text" id="current-tools" name="current-tools" required 
+                                       class="input-focus w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all"
+                                       placeholder="e.g., Square POS, Excel, QuickBooks, Salesforce">
+                                <div class="error-message hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <label for="team-size" class="block text-sm font-medium text-gray-700 mb-2">Team Size</label>
+                            <select id="team-size" name="team-size" 
+                                    class="input-focus w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all">
+                                <option value="">Select team size</option>
+                                <option value="1-5">👤 1-5 employees</option>
+                                <option value="6-20">👥 6-20 employees</option>
+                                <option value="21-50">👨‍👩‍👧‍👦 21-50 employees</option>
+                                <option value="51-100">🏢 51-100 employees</option>
+                                <option value="100+">🏭 100+ employees</option>
                             </select>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Top Business Pains (select all that apply)</label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="pains" value="manual-data-entry" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Too much manual data entry</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" name="pains" value="customer-follow-up" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Inconsistent customer follow-up</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" name="pains" value="scheduling-conflicts" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Scheduling conflicts</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" name="pains" value="inventory-tracking" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Inventory tracking issues</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" name="pains" value="reporting-delays" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Delayed reporting</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" name="pains" value="payment-processing" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Payment processing delays</span>
-                            </label>
+                    <!-- Contact Information Section -->
+                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-address-book text-aethelo-purple mr-2"></i>Contact Information
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="relative">
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                                <input type="email" id="email" name="email" required 
+                                       class="input-focus w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all"
+                                       placeholder="your.email@company.com">
+                                <div class="error-message hidden text-red-500 text-sm mt-1"></div>
+                            </div>
+                            <div class="relative">
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" 
+                                       class="input-focus w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all"
+                                       placeholder="(555) 123-4567">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <label for="urgency" class="block text-sm font-medium text-gray-700 mb-2">How urgent is your automation need?</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <label class="urgency-option flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="radio" name="urgency" value="immediate" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300">
+                                    <span class="ml-2 text-sm text-gray-700">🔥 Immediate (ASAP)</span>
+                                </label>
+                                <label class="urgency-option flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="radio" name="urgency" value="soon" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300">
+                                    <span class="ml-2 text-sm text-gray-700">⏰ Soon (1-3 months)</span>
+                                </label>
+                                <label class="urgency-option flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                                    <input type="radio" name="urgency" value="planning" class="h-4 w-4 text-aethelo-orange focus:ring-aethelo-orange border-gray-300">
+                                    <span class="ml-2 text-sm text-gray-700">📅 Planning (3-6 months)</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="daily-volume" class="block text-sm font-medium text-gray-700 mb-2">Daily Volume</label>
-                            <input type="text" id="daily-volume" name="daily-volume" required 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
-                                   placeholder="e.g., 50 orders, 30 appointments">
-                        </div>
-                        <div>
-                            <label for="current-tools" class="block text-sm font-medium text-gray-700 mb-2">Current Tools</label>
-                            <input type="text" id="current-tools" name="current-tools" required 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
-                                   placeholder="e.g., Square POS, Excel, QuickBooks">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="contact-info" class="block text-sm font-medium text-gray-700 mb-2">Contact Information</label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="email" id="email" name="email" required 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
-                                   placeholder="Email address">
-                            <input type="tel" id="phone" name="phone" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent"
-                                   placeholder="Phone number (optional)">
-                        </div>
-                    </div>
-
+                    <!-- Submit Button -->
                     <div class="text-center">
-                        <button type="submit" class="bg-aethelo-orange text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors focus:ring-4 focus:ring-orange-200">
-                            <i class="fas fa-magic mr-2"></i>Get My Automation Recommendations
+                        <button type="submit" id="submit-btn" class="bg-gradient-to-r from-aethelo-orange to-aethelo-blue text-white px-12 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 focus:ring-4 focus:ring-orange-200">
+                            <i class="fas fa-magic mr-3"></i>Get My Automation Recommendations
+                            <div class="loading-spinner hidden inline-block ml-3"></div>
                         </button>
+                        <p class="text-sm text-gray-500 mt-4">✨ Get personalized recommendations in under 60 seconds</p>
                     </div>
                 </form>
             </div>
 
-            <!-- Results Section (initially hidden) -->
+            <!-- Enhanced Results Section -->
             <div id="results-section" class="hidden">
-                <!-- AI Recommendations -->
-                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
-                    <h3 class="text-2xl font-bold text-aethelo-dark mb-6">
-                        <i class="fas fa-lightbulb text-aethelo-orange mr-2"></i>Your Personalized Automation Ideas
-                    </h3>
-                    <div id="recommendations-content" class="space-y-6">
+                <!-- AI Recommendations with Enhanced UI -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 mb-8 animate-bounce-in">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-aethelo-blue to-aethelo-purple rounded-full mb-4">
+                            <i class="fas fa-lightbulb text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold text-aethelo-dark mb-2">Your Personalized Automation Ideas</h3>
+                        <p class="text-gray-600">Tailored recommendations based on your business needs</p>
+                        <div class="mt-4 w-32 h-1 bg-gradient-to-r from-aethelo-blue to-aethelo-purple rounded mx-auto"></div>
+                    </div>
+                    <div id="recommendations-content" class="space-y-8">
                         <!-- Dynamic content will be inserted here -->
                     </div>
                 </div>
 
-                <!-- Proposal Draft -->
-                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
-                    <h3 class="text-2xl font-bold text-aethelo-dark mb-6">
-                        <i class="fas fa-file-contract text-aethelo-orange mr-2"></i>Recommended Service Tiers
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="proposal-content">
+                <!-- Enhanced Proposal Draft -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 mb-8">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-aethelo-green to-aethelo-blue rounded-full mb-4">
+                            <i class="fas fa-file-contract text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold text-aethelo-dark mb-2">Recommended Service Tiers</h3>
+                        <p class="text-gray-600">Choose the perfect package for your automation journey</p>
+                        <div class="mt-4 w-32 h-1 bg-gradient-to-r from-aethelo-green to-aethelo-blue rounded mx-auto"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="proposal-content">
                         <!-- Dynamic content will be inserted here -->
                     </div>
-                    <div class="text-center mt-8">
-                        <button class="bg-aethelo-blue text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-500 transition-colors mr-4">
-                            <i class="fas fa-calendar mr-2"></i>Book a 15-minute discovery
-                        </button>
-                        <button class="border border-aethelo-orange text-aethelo-orange px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors">
-                            <i class="fas fa-download mr-2"></i>Download Proposal
-                        </button>
+                    <div class="text-center mt-12 space-y-4">
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button class="bg-gradient-to-r from-aethelo-blue to-aethelo-purple text-white px-8 py-4 rounded-2xl font-bold hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+                                <i class="fas fa-calendar mr-2"></i>Book a 15-minute discovery call
+                            </button>
+                            <button class="border-2 border-aethelo-orange text-aethelo-orange px-8 py-4 rounded-2xl font-bold hover:bg-aethelo-orange hover:text-white transition-all duration-300">
+                                <i class="fas fa-download mr-2"></i>Download Full Proposal
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-center space-x-6 text-sm text-gray-500">
+                            <span class="flex items-center"><i class="fas fa-shield-alt mr-1 text-green-500"></i>No commitment required</span>
+                            <span class="flex items-center"><i class="fas fa-clock mr-1 text-blue-500"></i>Quick 15-min call</span>
+                            <span class="flex items-center"><i class="fas fa-star mr-1 text-yellow-500"></i>Expert guidance</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Client Tab Content -->
+    <!-- Enhanced Client Tab Content -->
     <div id="client-content" class="tab-content hidden">
         <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <!-- Demo Notice -->
-            <div class="bg-aethelo-blue bg-opacity-10 border border-aethelo-blue rounded-lg p-4 mb-8">
+            <!-- Enhanced Demo Notice -->
+            <div class="glass-morphism rounded-2xl p-6 mb-8 border border-aethelo-blue/20">
                 <div class="flex items-center">
-                    <i class="fas fa-info-circle text-aethelo-blue mr-2"></i>
-                    <span class="text-aethelo-blue font-medium">This is a demo portal showing hypothetical project data for illustration purposes.</span>
-                </div>
-            </div>
-
-            <!-- KPI Strip -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="kpi-card text-white rounded-xl p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-white text-opacity-80 text-sm">Automation Runs</p>
-                            <p class="text-3xl font-bold" id="runs-per-day">127</p>
-                            <p class="text-white text-opacity-80 text-xs">per day</p>
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-r from-aethelo-blue to-aethelo-purple rounded-full flex items-center justify-center">
+                            <i class="fas fa-info-circle text-white text-xl"></i>
                         </div>
-                        <i class="fas fa-robot text-4xl text-white text-opacity-50"></i>
                     </div>
-                </div>
-                <div class="kpi-card text-white rounded-xl p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-white text-opacity-80 text-sm">Time Saved</p>
-                            <p class="text-3xl font-bold" id="time-saved">18.5h</p>
-                            <p class="text-white text-opacity-80 text-xs">per week</p>
-                        </div>
-                        <i class="fas fa-clock text-4xl text-white text-opacity-50"></i>
-                    </div>
-                </div>
-                <div class="kpi-card text-white rounded-xl p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-white text-opacity-80 text-sm">Error Rate</p>
-                            <p class="text-3xl font-bold" id="error-rate">0.3%</p>
-                            <p class="text-white text-opacity-80 text-xs">system-wide</p>
-                        </div>
-                        <i class="fas fa-shield-alt text-4xl text-white text-opacity-50"></i>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-semibold text-aethelo-dark">Demo Portal Environment</h4>
+                        <p class="text-gray-600">This is a demo portal showing hypothetical project data for illustration purposes. All metrics and tasks are simulated.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Project Phases -->
-            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
-                <h3 class="text-2xl font-bold text-aethelo-dark mb-6">Project: Customer Service Automation</h3>
-                <div class="flex flex-wrap gap-4 mb-6">
-                    <button onclick="changePhase('discovery')" id="phase-discovery" class="phase-btn bg-aethelo-orange text-white px-4 py-2 rounded-lg font-medium">
-                        Discovery
-                    </button>
-                    <button onclick="changePhase('build')" id="phase-build" class="phase-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium">
-                        Build
-                    </button>
-                    <button onclick="changePhase('pilot')" id="phase-pilot" class="phase-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium">
-                        Pilot
-                    </button>
-                    <button onclick="changePhase('iterate')" id="phase-iterate" class="phase-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium">
-                        Iterate
-                    </button>
+            <!-- Enhanced KPI Dashboard -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="kpi-card text-white rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/80 text-sm font-medium">Automation Runs</p>
+                            <p class="text-4xl font-bold" id="runs-per-day">127</p>
+                            <p class="text-white/70 text-xs">per day</p>
+                            <div class="metric-trend metric-up mt-2">
+                                <i class="fas fa-arrow-up mr-1"></i>+12% vs last week
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <i class="fas fa-robot text-5xl text-white/30"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <p id="phase-description" class="text-gray-700">We're gathering requirements and mapping your current processes to identify automation opportunities.</p>
+                
+                <div class="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/80 text-sm font-medium">Time Saved</p>
+                            <p class="text-4xl font-bold" id="time-saved">18.5h</p>
+                            <p class="text-white/70 text-xs">per week</p>
+                            <div class="metric-trend metric-up mt-2">
+                                <i class="fas fa-arrow-up mr-1"></i>+8% vs last week
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <i class="fas fa-clock text-5xl text-white/30"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-green-500 to-teal-500 text-white rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/80 text-sm font-medium">Error Rate</p>
+                            <p class="text-4xl font-bold" id="error-rate">0.3%</p>
+                            <p class="text-white/70 text-xs">system-wide</p>
+                            <div class="metric-trend metric-down mt-2">
+                                <i class="fas fa-arrow-down mr-1"></i>-5% vs last week
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <i class="fas fa-shield-alt text-5xl text-white/30"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-white/80 text-sm font-medium">Cost Savings</p>
+                            <p class="text-4xl font-bold" id="cost-savings">$3.2K</p>
+                            <p class="text-white/70 text-xs">this month</p>
+                            <div class="metric-trend metric-up mt-2">
+                                <i class="fas fa-arrow-up mr-1"></i>+15% vs last month
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <i class="fas fa-dollar-sign text-5xl text-white/30"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Tasks Section -->
-            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold text-aethelo-dark">Project Tasks</h3>
-                    <button onclick="showAddTaskModal()" class="bg-aethelo-blue text-white px-4 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors">
-                        <i class="fas fa-plus mr-2"></i>Add Task
+            <!-- Enhanced Project Phases -->
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-aethelo-dark">Project: Customer Service Automation</h3>
+                        <p class="text-gray-600 mt-1">Streamlining customer interactions and support workflows</p>
+                    </div>
+                    <div class="mt-4 lg:mt-0">
+                        <span class="bg-gradient-to-r from-green-100 to-green-200 text-green-800 px-4 py-2 rounded-full text-sm font-semibold">
+                            <i class="fas fa-check-circle mr-1"></i>On Track
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-4 mb-8">
+                    <button onclick="changePhase('discovery')" id="phase-discovery" class="phase-btn phase-indicator bg-aethelo-orange text-white px-6 py-3 rounded-xl font-medium transition-all hover:shadow-lg">
+                        <i class="fas fa-search mr-2"></i>Discovery
+                    </button>
+                    <button onclick="changePhase('build')" id="phase-build" class="phase-btn bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all hover:shadow-lg hover:bg-gray-300">
+                        <i class="fas fa-hammer mr-2"></i>Build
+                    </button>
+                    <button onclick="changePhase('pilot')" id="phase-pilot" class="phase-btn bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all hover:shadow-lg hover:bg-gray-300">
+                        <i class="fas fa-flask mr-2"></i>Pilot
+                    </button>
+                    <button onclick="changePhase('iterate')" id="phase-iterate" class="phase-btn bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all hover:shadow-lg hover:bg-gray-300">
+                        <i class="fas fa-sync-alt mr-2"></i>Iterate
                     </button>
                 </div>
+                
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-gradient-to-r from-aethelo-blue to-aethelo-purple rounded-full flex items-center justify-center">
+                                <i class="fas fa-lightbulb text-white"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Current Phase Details</h4>
+                            <p id="phase-description" class="text-gray-700">We're gathering requirements and mapping your current processes to identify automation opportunities.</p>
+                            <div class="mt-4 flex items-center space-x-4 text-sm text-gray-600">
+                                <span class="flex items-center"><i class="fas fa-calendar mr-1"></i>Started: Dec 15, 2024</span>
+                                <span class="flex items-center"><i class="fas fa-clock mr-1"></i>Duration: 2-3 weeks</span>
+                                <span class="flex items-center"><i class="fas fa-user mr-1"></i>Lead: Sarah Chen</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Tasks Section -->
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+                    <div>
+                        <h3 class="text-2xl font-bold text-aethelo-dark">Project Tasks</h3>
+                        <p class="text-gray-600 mt-1">Track progress and manage deliverables</p>
+                    </div>
+                    <div class="mt-4 sm:mt-0 flex space-x-3">
+                        <button onclick="filterTasks('all')" class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                            All Tasks
+                        </button>
+                        <button onclick="filterTasks('todo')" class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                            To Do
+                        </button>
+                        <button onclick="filterTasks('in-progress')" class="filter-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                            In Progress
+                        </button>
+                        <button onclick="showAddTaskModal()" class="bg-gradient-to-r from-aethelo-blue to-aethelo-purple text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all">
+                            <i class="fas fa-plus mr-2"></i>Add Task
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Task Statistics -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="total-tasks">8</div>
+                        <div class="text-sm text-blue-800">Total Tasks</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 text-center">
+                        <div class="text-2xl font-bold text-green-600" id="completed-tasks">2</div>
+                        <div class="text-sm text-green-800">Completed</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl p-4 text-center">
+                        <div class="text-2xl font-bold text-yellow-600" id="progress-tasks">1</div>
+                        <div class="text-sm text-yellow-800">In Progress</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 text-center">
+                        <div class="text-2xl font-bold text-gray-600" id="todo-tasks">5</div>
+                        <div class="text-sm text-gray-800">To Do</div>
+                    </div>
+                </div>
+                
                 <div id="tasks-container" class="space-y-4">
-                    <!-- Tasks will be populated here -->
+                    <!-- Enhanced tasks will be populated here -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Admin Tab Content -->
+    <!-- Enhanced Admin Tab Content -->
     <div id="admin-content" class="tab-content hidden">
-        <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-xl shadow-lg p-8">
-                <h3 class="text-2xl font-bold text-aethelo-dark mb-6">
-                    <i class="fas fa-tools text-aethelo-orange mr-2"></i>Admin Panel
-                </h3>
+        <div class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-aethelo-purple to-aethelo-orange rounded-full mb-4">
+                        <i class="fas fa-tools text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-aethelo-dark mb-2">Admin Control Panel</h3>
+                    <p class="text-gray-600">Manage demo data and system settings</p>
+                </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="border rounded-lg p-6">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Demo Data Management</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Demo Data Management -->
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
+                        <div class="text-center mb-4">
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-database text-white"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">Demo Data</h4>
+                        </div>
                         <div class="space-y-3">
-                            <button onclick="resetSeedData()" class="w-full bg-aethelo-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors">
-                                <i class="fas fa-refresh mr-2"></i>Reset Seed Data
+                            <button onclick="resetSeedData()" class="w-full bg-gradient-to-r from-aethelo-orange to-aethelo-blue text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition-all">
+                                <i class="fas fa-refresh mr-2"></i>Reset All Data
                             </button>
-                            <button onclick="updateKPIs()" class="w-full bg-aethelo-blue text-white px-4 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors">
+                            <button onclick="updateKPIs()" class="w-full bg-gradient-to-r from-aethelo-blue to-aethelo-purple text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition-all">
                                 <i class="fas fa-chart-line mr-2"></i>Randomize KPIs
+                            </button>
+                            <button onclick="generateSampleTasks()" class="w-full bg-gradient-to-r from-aethelo-green to-aethelo-blue text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition-all">
+                                <i class="fas fa-tasks mr-2"></i>Generate Tasks
                             </button>
                         </div>
                     </div>
                     
-                    <div class="border rounded-lg p-6">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-4">System Status</h4>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
+                    <!-- System Status -->
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
+                        <div class="text-center mb-4">
+                            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-heartbeat text-white"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">System Status</h4>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Demo Mode:</span>
-                                <span class="text-green-600 font-medium">Active</span>
+                                <span class="flex items-center text-green-600 font-medium">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>Active
+                                </span>
                             </div>
-                            <div class="flex justify-between">
+                            <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Last Reset:</span>
-                                <span class="text-gray-800" id="last-reset">Just now</span>
+                                <span class="text-gray-800 font-medium" id="last-reset">Just now</span>
                             </div>
-                            <div class="flex justify-between">
+                            <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Active Users:</span>
-                                <span class="text-gray-800">1 (Demo)</span>
+                                <span class="text-gray-800 font-medium">1 (Demo)</span>
                             </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Uptime:</span>
+                                <span class="text-gray-800 font-medium">99.9%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics Control -->
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
+                        <div class="text-center mb-4">
+                            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-analytics text-white"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">Analytics</h4>
+                        </div>
+                        <div class="space-y-3">
+                            <button onclick="exportData()" class="w-full bg-gradient-to-r from-aethelo-purple to-aethelo-blue text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition-all">
+                                <i class="fas fa-download mr-2"></i>Export Data
+                            </button>
+                            <button onclick="generateReport()" class="w-full bg-gradient-to-r from-aethelo-orange to-aethelo-purple text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition-all">
+                                <i class="fas fa-file-alt mr-2"></i>Generate Report
+                            </button>
+                            <button onclick="clearLogs()" class="w-full bg-gradient-to-r from-red-400 to-red-500 text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition-all">
+                                <i class="fas fa-trash mr-2"></i>Clear Logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Activity Log -->
+                <div class="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-history mr-2"></i>Recent Activity
+                    </h4>
+                    <div class="space-y-3 max-h-64 overflow-y-auto">
+                        <div class="flex items-center space-x-3 text-sm">
+                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span class="text-gray-600">12:34 PM</span>
+                            <span class="text-gray-800">Demo data reset by admin</span>
+                        </div>
+                        <div class="flex items-center space-x-3 text-sm">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span class="text-gray-600">12:30 PM</span>
+                            <span class="text-gray-800">KPIs updated successfully</span>
+                        </div>
+                        <div class="flex items-center space-x-3 text-sm">
+                            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                            <span class="text-gray-600">12:25 PM</span>
+                            <span class="text-gray-800">New task added to project</span>
+                        </div>
+                        <div class="flex items-center space-x-3 text-sm">
+                            <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                            <span class="text-gray-600">12:20 PM</span>
+                            <span class="text-gray-800">User completed intake form</span>
                         </div>
                     </div>
                 </div>
@@ -351,30 +858,162 @@
         </div>
     </div>
 
-    <!-- Add Task Modal -->
-    <div id="add-task-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
-            <h4 class="text-xl font-bold text-aethelo-dark mb-4">Add New Task</h4>
+    <!-- New Analytics Tab Content -->
+    <div id="analytics-content" class="tab-content hidden">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <!-- Analytics Overview -->
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-aethelo-dark mb-2">Analytics Dashboard</h2>
+                <p class="text-gray-600">Comprehensive insights into automation performance and trends</p>
+            </div>
+            
+            <!-- Time Range Selector -->
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 sm:mb-0">Performance Metrics</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="setTimeRange('7d')" class="time-btn bg-aethelo-orange text-white px-4 py-2 rounded-lg text-sm font-medium">7 Days</button>
+                        <button onclick="setTimeRange('30d')" class="time-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">30 Days</button>
+                        <button onclick="setTimeRange('90d')" class="time-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">90 Days</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Automation Runs Chart -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Automation Runs Over Time</h4>
+                    <div class="chart-container">
+                        <canvas id="runsChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Time Savings Chart -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Weekly Time Savings</h4>
+                    <div class="chart-container">
+                        <canvas id="savingsChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Error Rate Chart -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Error Rate Trends</h4>
+                    <div class="chart-container">
+                        <canvas id="errorChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Cost Analysis -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Cost Savings Breakdown</h4>
+                    <div class="chart-container">
+                        <canvas id="costChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Metrics Table -->
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-6">Detailed Performance Metrics</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="pb-3 text-sm font-semibold text-gray-800">Metric</th>
+                                <th class="pb-3 text-sm font-semibold text-gray-800">Today</th>
+                                <th class="pb-3 text-sm font-semibold text-gray-800">This Week</th>
+                                <th class="pb-3 text-sm font-semibold text-gray-800">This Month</th>
+                                <th class="pb-3 text-sm font-semibold text-gray-800">Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="py-3 text-sm text-gray-800">Automation Runs</td>
+                                <td class="py-3 text-sm font-medium">127</td>
+                                <td class="py-3 text-sm font-medium">889</td>
+                                <td class="py-3 text-sm font-medium">3,542</td>
+                                <td class="py-3"><span class="metric-trend metric-up"><i class="fas fa-arrow-up mr-1"></i>+12%</span></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 text-sm text-gray-800">Time Saved (hours)</td>
+                                <td class="py-3 text-sm font-medium">2.6</td>
+                                <td class="py-3 text-sm font-medium">18.5</td>
+                                <td class="py-3 text-sm font-medium">74.2</td>
+                                <td class="py-3"><span class="metric-trend metric-up"><i class="fas fa-arrow-up mr-1"></i>+8%</span></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 text-sm text-gray-800">Error Rate (%)</td>
+                                <td class="py-3 text-sm font-medium">0.3</td>
+                                <td class="py-3 text-sm font-medium">0.4</td>
+                                <td class="py-3 text-sm font-medium">0.6</td>
+                                <td class="py-3"><span class="metric-trend metric-down"><i class="fas fa-arrow-down mr-1"></i>-5%</span></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 text-sm text-gray-800">Cost Savings ($)</td>
+                                <td class="py-3 text-sm font-medium">106</td>
+                                <td class="py-3 text-sm font-medium">740</td>
+                                <td class="py-3 text-sm font-medium">3,200</td>
+                                <td class="py-3"><span class="metric-trend metric-up"><i class="fas fa-arrow-up mr-1"></i>+15%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Add Task Modal -->
+    <div id="add-task-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-aethelo-blue to-aethelo-purple rounded-full mb-3">
+                    <i class="fas fa-plus text-white"></i>
+                </div>
+                <h4 class="text-xl font-bold text-aethelo-dark">Add New Task</h4>
+                <p class="text-gray-600 text-sm">Create a new task for the project</p>
+            </div>
+            
             <form id="add-task-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="task-title" class="block text-sm font-medium text-gray-700 mb-2">Task Title</label>
-                        <input type="text" id="task-title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent">
+                        <label for="task-title" class="block text-sm font-medium text-gray-700 mb-2">Task Title *</label>
+                        <input type="text" id="task-title" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all">
                     </div>
                     <div>
-                        <label for="task-owner" class="block text-sm font-medium text-gray-700 mb-2">Owner</label>
-                        <input type="text" id="task-owner" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent">
+                        <label for="task-owner" class="block text-sm font-medium text-gray-700 mb-2">Owner *</label>
+                        <select id="task-owner" required 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all">
+                            <option value="">Select owner</option>
+                            <option value="Sarah Chen">Sarah Chen</option>
+                            <option value="Mike Johnson">Mike Johnson</option>
+                            <option value="Alex Rodriguez">Alex Rodriguez</option>
+                            <option value="Emma Wilson">Emma Wilson</option>
+                            <option value="David Kim">David Kim</option>
+                        </select>
                     </div>
                     <div>
-                        <label for="task-due" class="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
-                        <input type="date" id="task-due" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aethelo-orange focus:border-transparent">
+                        <label for="task-due" class="block text-sm font-medium text-gray-700 mb-2">Due Date *</label>
+                        <input type="date" id="task-due" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label for="task-priority" class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                        <select id="task-priority" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-aethelo-orange focus:border-transparent transition-all">
+                            <option value="low">🟢 Low Priority</option>
+                            <option value="medium" selected>🟡 Medium Priority</option>
+                            <option value="high">🔴 High Priority</option>
+                        </select>
                     </div>
                 </div>
-                <div class="flex space-x-3 mt-6">
-                    <button type="submit" class="flex-1 bg-aethelo-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors">
-                        Add Task
+                <div class="flex space-x-3 mt-8">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-aethelo-orange to-aethelo-blue text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition-all">
+                        <i class="fas fa-plus mr-2"></i>Add Task
                     </button>
-                    <button type="button" onclick="hideAddTaskModal()" class="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                    <button type="button" onclick="hideAddTaskModal()" class="flex-1 border border-gray-300 text-gray-700 px-4 py-3 rounded-xl font-medium hover:bg-gray-50 transition-all">
                         Cancel
                     </button>
                 </div>
@@ -382,73 +1021,257 @@
         </div>
     </div>
 
+    <!-- Notification System -->
+    <div id="notification" class="notification bg-white rounded-xl shadow-lg p-4 max-w-sm">
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check text-white text-sm"></i>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-800" id="notification-title">Success!</h4>
+                <p class="text-sm text-gray-600" id="notification-message">Action completed successfully.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action">
+        <button onclick="scrollToTop()" class="bg-gradient-to-r from-aethelo-orange to-aethelo-blue text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110">
+            <i class="fas fa-arrow-up text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip"></div>
+
     <script>
-        // Application State
+        // Enhanced Application State
         let currentPhase = 'discovery';
+        let currentTab = 'guest';
+        let currentTimeRange = '7d';
         let tasks = [
-            { id: 1, title: 'Requirements gathering session', owner: 'Sarah Chen', due: '2024-02-15', status: 'completed' },
-            { id: 2, title: 'Process mapping workshop', owner: 'Mike Johnson', due: '2024-02-18', status: 'completed' },
-            { id: 3, title: 'Technical architecture review', owner: 'Alex Rodriguez', due: '2024-02-22', status: 'in-progress' },
-            { id: 4, title: 'Integration planning', owner: 'Sarah Chen', due: '2024-02-25', status: 'todo' },
-            { id: 5, title: 'Security assessment', owner: 'David Kim', due: '2024-02-28', status: 'todo' },
-            { id: 6, title: 'User interface mockups', owner: 'Emma Wilson', due: '2024-03-02', status: 'todo' },
-            { id: 7, title: 'Database schema design', owner: 'Alex Rodriguez', due: '2024-03-05', status: 'todo' },
-            { id: 8, title: 'API documentation', owner: 'Mike Johnson', due: '2024-03-08', status: 'todo' }
+            { id: 1, title: 'Requirements gathering session', owner: 'Sarah Chen', due: '2024-02-15', status: 'completed', priority: 'high' },
+            { id: 2, title: 'Process mapping workshop', owner: 'Mike Johnson', due: '2024-02-18', status: 'completed', priority: 'medium' },
+            { id: 3, title: 'Technical architecture review', owner: 'Alex Rodriguez', due: '2024-02-22', status: 'in-progress', priority: 'high' },
+            { id: 4, title: 'Integration planning', owner: 'Sarah Chen', due: '2024-02-25', status: 'todo', priority: 'medium' },
+            { id: 5, title: 'Security assessment', owner: 'David Kim', due: '2024-02-28', status: 'todo', priority: 'high' },
+            { id: 6, title: 'User interface mockups', owner: 'Emma Wilson', due: '2024-03-02', status: 'todo', priority: 'low' },
+            { id: 7, title: 'Database schema design', owner: 'Alex Rodriguez', due: '2024-03-05', status: 'todo', priority: 'medium' },
+            { id: 8, title: 'API documentation', owner: 'Mike Johnson', due: '2024-03-08', status: 'todo', priority: 'low' }
         ];
 
-        // Seed data for recommendations
-        const sampleRecommendations = [
+        // Enhanced seed data for recommendations
+        const enhancedRecommendations = [
             {
-                title: "Automated Customer Follow-up System",
-                problem: "Inconsistent customer communication leads to lost opportunities",
-                steps: ["Set up customer database integration", "Create email/SMS templates", "Configure trigger rules", "Test automation flows"],
-                integrations: ["CRM integration", "Email platform", "SMS service"],
-                impact: "35% increase in customer retention",
-                complexity: "Medium"
+                title: "AI-Powered Customer Follow-up System",
+                problem: "Inconsistent customer communication leads to lost opportunities and reduced retention",
+                steps: [
+                    "Integrate with existing CRM system",
+                    "Set up intelligent trigger rules based on customer behavior",
+                    "Create personalized email and SMS templates",
+                    "Configure automated follow-up sequences",
+                    "Implement A/B testing for optimization"
+                ],
+                integrations: ["CRM integration", "Email platform", "SMS service", "Analytics tools"],
+                impact: "35% increase in customer retention, 50% reduction in manual follow-up time",
+                complexity: "Medium",
+                estimatedSavings: "$2,400/month",
+                implementationTime: "4-6 weeks",
+                roi: "300%"
             },
             {
-                title: "Smart Appointment Scheduling",
-                problem: "Manual scheduling creates conflicts and inefficiencies",
-                steps: ["Calendar system integration", "Availability rules setup", "Automated confirmations", "Rescheduling workflows"],
-                integrations: ["Calendar API", "Payment gateway", "Notification system"],
-                impact: "50% reduction in scheduling conflicts",
-                complexity: "Low"
+                title: "Smart Appointment Scheduling & Management",
+                problem: "Manual scheduling creates conflicts, no-shows, and inefficient resource utilization",
+                steps: [
+                    "Implement calendar system integration",
+                    "Set up automated availability management",
+                    "Configure appointment confirmation workflows",
+                    "Create rescheduling and cancellation automation",
+                    "Add payment processing integration"
+                ],
+                integrations: ["Calendar API", "Payment gateway", "Notification system", "Resource management"],
+                impact: "50% reduction in scheduling conflicts, 30% decrease in no-shows",
+                complexity: "Low",
+                estimatedSavings: "$1,800/month",
+                implementationTime: "2-4 weeks",
+                roi: "250%"
             },
             {
-                title: "Inventory Tracking Automation",
-                problem: "Manual inventory management leads to stockouts and overstocking",
-                steps: ["POS system integration", "Reorder point configuration", "Supplier connection", "Alert setup"],
-                integrations: ["POS system", "Supplier APIs", "Accounting software"],
-                impact: "25% reduction in inventory costs",
-                complexity: "High"
+                title: "Intelligent Inventory & Supply Chain Automation",
+                problem: "Manual inventory management leads to stockouts, overstocking, and increased carrying costs",
+                steps: [
+                    "Connect to POS and inventory systems",
+                    "Configure predictive reorder point algorithms",
+                    "Set up automated supplier communications",
+                    "Implement real-time stock level monitoring",
+                    "Create advanced analytics and reporting"
+                ],
+                integrations: ["POS system", "Supplier APIs", "Accounting software", "Predictive analytics"],
+                impact: "25% reduction in inventory costs, 90% fewer stockouts",
+                complexity: "High",
+                estimatedSavings: "$3,200/month",
+                implementationTime: "8-12 weeks",
+                roi: "400%"
+            },
+            {
+                title: "Automated Quality Control & Compliance Monitoring",
+                problem: "Inconsistent quality checks and compliance tracking increase risk and reduce efficiency",
+                steps: [
+                    "Implement automated quality checkpoints",
+                    "Set up compliance monitoring workflows",
+                    "Create real-time alerting systems",
+                    "Configure automated reporting and documentation",
+                    "Integrate with regulatory systems"
+                ],
+                integrations: ["Quality management system", "Compliance platforms", "Alert systems", "Documentation tools"],
+                impact: "80% reduction in compliance violations, 60% faster quality processes",
+                complexity: "High",
+                estimatedSavings: "$2,800/month",
+                implementationTime: "6-10 weeks",
+                roi: "350%"
             }
         ];
 
-        // Navigation Functions
+        // Enhanced Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            
+            if (body.classList.contains('dark-theme')) {
+                body.classList.remove('dark-theme');
+                icon.className = 'fas fa-moon text-gray-600';
+            } else {
+                body.classList.add('dark-theme');
+                icon.className = 'fas fa-sun text-yellow-500';
+            }
+        }
+
+        // Enhanced Navigation with Progress Tracking
         function showTab(tabName) {
-            // Hide all tab contents
+            // Hide all tab contents with fade effect
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.add('hidden');
+                content.classList.remove('animate-fade-in');
             });
             
             // Remove active styles from all tabs
-            document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+            document.querySelectorAll('.tab-button').forEach(tab => {
                 tab.classList.remove('border-aethelo-orange', 'text-aethelo-orange');
                 tab.classList.add('border-transparent', 'text-gray-500');
             });
             
-            // Show selected tab content
-            document.getElementById(`${tabName}-content`).classList.remove('hidden');
+            // Show selected tab content with animation
+            const selectedContent = document.getElementById(`${tabName}-content`);
+            selectedContent.classList.remove('hidden');
+            setTimeout(() => {
+                selectedContent.classList.add('animate-fade-in');
+            }, 50);
             
             // Add active styles to selected tab
             const activeTab = document.getElementById(`${tabName}-tab`);
             activeTab.classList.remove('border-transparent', 'text-gray-500');
             activeTab.classList.add('border-aethelo-orange', 'text-aethelo-orange');
+            
+            // Update progress bar
+            updateProgressBar(tabName);
+            currentTab = tabName;
+
+            // Initialize charts if analytics tab
+            if (tabName === 'analytics') {
+                setTimeout(initializeCharts, 100);
+            }
         }
 
-        // Form Submission
-        document.getElementById('intake-form').addEventListener('submit', function(e) {
+        function updateProgressBar(tabName) {
+            const progressBar = document.querySelector('.wizard-progress');
+            const widthMap = {
+                'guest': '25%',
+                'client': '50%',
+                'admin': '75%',
+                'analytics': '100%'
+            };
+            progressBar.style.width = widthMap[tabName] || '25%';
+        }
+
+        // Enhanced Form Validation
+        function validateField(field) {
+            const value = field.value?.trim();
+            const errorElement = field.parentElement.querySelector('.error-message');
+            let isValid = true;
+            let errorMessage = '';
+
+            // Clear previous error state
+            field.classList.remove('field-error');
+            errorElement.classList.add('hidden');
+
+            if (field.hasAttribute('required') && !value) {
+                isValid = false;
+                errorMessage = 'This field is required';
+            } else if (field.type === 'email' && value && !isValidEmail(value)) {
+                isValid = false;
+                errorMessage = 'Please enter a valid email address';
+            } else if (field.name === 'pains') {
+                const checkedPains = document.querySelectorAll('input[name="pains"]:checked');
+                if (checkedPains.length === 0) {
+                    isValid = false;
+                    errorMessage = 'Please select at least one business pain';
+                }
+            }
+
+            if (!isValid) {
+                field.classList.add('field-error');
+                errorElement.textContent = errorMessage;
+                errorElement.classList.remove('hidden');
+            }
+
+            return isValid;
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        // Enhanced Form Submission with Loading States
+        document.getElementById('intake-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const spinner = submitBtn.querySelector('.loading-spinner');
+            const originalText = submitBtn.innerHTML;
+            
+            // Validate all fields
+            let isFormValid = true;
+            const requiredFields = this.querySelectorAll('[required]');
+            
+            requiredFields.forEach(field => {
+                if (!validateField(field)) {
+                    isFormValid = false;
+                }
+            });
+
+            // Validate pain points separately
+            const painPoints = document.querySelectorAll('input[name="pains"]:checked');
+            if (painPoints.length === 0) {
+                const painError = document.querySelector('input[name="pains"]').closest('.bg-gradient-to-r').querySelector('.error-message');
+                painError.textContent = 'Please select at least one business pain';
+                painError.classList.remove('hidden');
+                isFormValid = false;
+            }
+
+            if (!isFormValid) {
+                showNotification('Please fix the errors above', 'error');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
+            submitBtn.innerHTML = '<i class="fas fa-magic mr-3"></i>Generating Recommendations...<div class="loading-spinner inline-block ml-3"></div>';
+            
+            // Simulate processing time
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
             // Get form data
             const formData = new FormData(this);
@@ -464,53 +1287,131 @@
                 }
             }
             
-            // Generate recommendations based on form data
-            generateRecommendations(data);
-            generateProposal(data);
+            // Generate enhanced recommendations
+            generateEnhancedRecommendations(data);
+            generateEnhancedProposal(data);
             
-            // Show results
-            document.getElementById('results-section').classList.remove('hidden');
-            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+            // Update step indicators
+            updateStepIndicators(2);
+            
+            // Show results with animation
+            const resultsSection = document.getElementById('results-section');
+            resultsSection.classList.remove('hidden');
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+            
+            // Reset button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            
+            // Show success notification
+            showNotification('Recommendations generated successfully!', 'success');
         });
 
-        function generateRecommendations(data) {
+        function updateStepIndicators(currentStep) {
+            for (let i = 1; i <= 3; i++) {
+                const circle = document.querySelector(`.step-circle:nth-of-type(${i})`);
+                const text = circle.nextElementSibling;
+                
+                if (i <= currentStep) {
+                    circle.className = 'step-circle w-8 h-8 bg-aethelo-orange text-white rounded-full flex items-center justify-center font-semibold text-sm';
+                    text.className = 'ml-2 text-sm font-medium text-aethelo-orange';
+                } else {
+                    circle.className = 'step-circle w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-semibold text-sm';
+                    text.className = 'ml-2 text-sm font-medium text-gray-500';
+                }
+            }
+        }
+
+        // Enhanced Recommendations Generation
+        function generateEnhancedRecommendations(data) {
             const container = document.getElementById('recommendations-content');
             container.innerHTML = '';
             
-            sampleRecommendations.forEach((rec, index) => {
+            // Select recommendations based on industry and pain points
+            let selectedRecommendations = enhancedRecommendations.slice(0, 3);
+            
+            // Customize based on industry
+            if (data.industry === 'restaurant') {
+                selectedRecommendations[0].title = "Restaurant Order & Delivery Automation";
+                selectedRecommendations[0].integrations.push("POS integration", "Delivery platforms");
+            } else if (data.industry === 'clinic') {
+                selectedRecommendations[0].title = "Patient Care & Appointment Automation";
+                selectedRecommendations[0].integrations.push("EMR integration", "Insurance systems");
+            }
+            
+            selectedRecommendations.forEach((rec, index) => {
                 const card = document.createElement('div');
-                card.className = 'border border-gray-200 rounded-lg p-6 card-hover';
+                card.className = 'bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-8 card-hover animate-slide-up';
+                card.style.animationDelay = `${index * 0.2}s`;
                 
-                const complexityColor = rec.complexity === 'Low' ? 'green' : 
-                                      rec.complexity === 'Medium' ? 'yellow' : 'red';
+                const complexityColors = {
+                    'Low': 'from-green-100 to-green-200 text-green-800',
+                    'Medium': 'from-yellow-100 to-yellow-200 text-yellow-800',
+                    'High': 'from-red-100 to-red-200 text-red-800'
+                };
                 
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <h4 class="text-lg font-semibold text-aethelo-dark">${rec.title}</h4>
-                        <span class="bg-${complexityColor}-100 text-${complexityColor}-800 px-2 py-1 rounded-full text-sm font-medium">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="flex-1">
+                            <h4 class="text-xl font-bold text-aethelo-dark mb-2">${rec.title}</h4>
+                            <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                <span class="flex items-center"><i class="fas fa-clock mr-1"></i>${rec.implementationTime}</span>
+                                <span class="flex items-center"><i class="fas fa-chart-line mr-1"></i>${rec.roi} ROI</span>
+                            </div>
+                        </div>
+                        <span class="bg-gradient-to-r ${complexityColors[rec.complexity]} px-3 py-1 rounded-full text-sm font-semibold ml-4">
                             ${rec.complexity}
                         </span>
                     </div>
-                    <p class="text-gray-600 mb-4">${rec.problem}</p>
-                    <div class="space-y-3">
+                    
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-6">
+                        <h5 class="font-semibold text-gray-800 mb-2 flex items-center">
+                            <i class="fas fa-exclamation-circle text-blue-500 mr-2"></i>Problem Solved
+                        </h5>
+                        <p class="text-gray-700">${rec.problem}</p>
+                    </div>
+                    
+                    <div class="space-y-6">
                         <div>
-                            <h5 class="font-medium text-gray-800 mb-1">Key Steps:</h5>
-                            <ul class="text-sm text-gray-600 list-disc list-inside">
-                                ${rec.steps.map(step => `<li>${step}</li>`).join('')}
-                            </ul>
+                            <h5 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-list-check text-green-500 mr-2"></i>Implementation Steps
+                            </h5>
+                            <div class="space-y-2">
+                                ${rec.steps.map((step, i) => `
+                                    <div class="flex items-start space-x-3">
+                                        <div class="w-6 h-6 bg-gradient-to-r from-aethelo-orange to-aethelo-blue text-white rounded-full flex items-center justify-center text-xs font-bold">${i + 1}</div>
+                                        <span class="text-sm text-gray-700 flex-1">${step}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
+                        
                         <div>
-                            <h5 class="font-medium text-gray-800 mb-1">Integrations:</h5>
+                            <h5 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-plug text-purple-500 mr-2"></i>Key Integrations
+                            </h5>
                             <div class="flex flex-wrap gap-2">
                                 ${rec.integrations.map(integration => 
-                                    `<span class="bg-aethelo-blue bg-opacity-20 text-aethelo-blue px-2 py-1 rounded text-sm">${integration}</span>`
+                                    `<span class="bg-gradient-to-r from-aethelo-blue/10 to-aethelo-purple/10 text-aethelo-blue border border-aethelo-blue/20 px-3 py-1 rounded-full text-sm font-medium">${integration}</span>`
                                 ).join('')}
                             </div>
                         </div>
-                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
-                            <p class="text-green-800 font-medium text-sm">
-                                <i class="fas fa-chart-line mr-1"></i>Estimated Impact: ${rec.impact}
-                            </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+                                <h6 class="font-semibold text-green-800 mb-1 flex items-center">
+                                    <i class="fas fa-chart-line mr-2"></i>Expected Impact
+                                </h6>
+                                <p class="text-green-700 text-sm">${rec.impact}</p>
+                            </div>
+                            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4">
+                                <h6 class="font-semibold text-blue-800 mb-1 flex items-center">
+                                    <i class="fas fa-dollar-sign mr-2"></i>Monthly Savings
+                                </h6>
+                                <p class="text-blue-700 text-sm font-bold">${rec.estimatedSavings}</p>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -519,57 +1420,134 @@
             });
         }
 
-        function generateProposal(data) {
+        // Enhanced Proposal Generation
+        function generateEnhancedProposal(data) {
             const container = document.getElementById('proposal-content');
             container.innerHTML = '';
             
             const tiers = [
                 {
                     name: 'Pilot',
+                    subtitle: 'Perfect for Testing',
                     price: '$1,500 setup + $250/mo',
-                    features: ['Single automation workflow', 'Basic integrations', '30-day pilot period', 'Email support'],
+                    yearlyPrice: '$4,500/year',
+                    features: [
+                        'Single automation workflow',
+                        'Basic integrations (2-3 systems)',
+                        '30-day pilot period',
+                        'Email support',
+                        'Basic reporting dashboard',
+                        'Setup & training included'
+                    ],
                     timeline: '2-3 weeks',
-                    ideal: 'Test automation with low risk'
+                    ideal: 'Small teams wanting to test automation',
+                    savings: 'Up to $1,200/month',
+                    popular: false
                 },
                 {
                     name: 'Standard',
+                    subtitle: 'Most Popular Choice',
                     price: '$4,000 setup + $800/mo',
-                    features: ['3-5 automation workflows', 'Advanced integrations', 'Custom dashboards', 'Priority support'],
+                    yearlyPrice: '$13,600/year',
+                    features: [
+                        '3-5 automation workflows',
+                        'Advanced integrations (5-8 systems)',
+                        'Custom dashboards & reporting',
+                        'Priority support (4-hour response)',
+                        'Monthly optimization reviews',
+                        'Advanced analytics & insights',
+                        'Mobile app access',
+                        'Team collaboration tools'
+                    ],
                     timeline: '4-6 weeks',
-                    ideal: 'Comprehensive automation suite'
+                    ideal: 'Growing businesses ready to scale',
+                    savings: 'Up to $3,500/month',
+                    popular: true
                 },
                 {
                     name: 'Pro',
+                    subtitle: 'Enterprise Grade',
                     price: '$10,000 setup + $2,000/mo',
-                    features: ['Unlimited workflows', 'Custom development', 'Dedicated success manager', '24/7 support'],
+                    yearlyPrice: '$34,000/year',
+                    features: [
+                        'Unlimited automation workflows',
+                        'Custom development & integrations',
+                        'Dedicated success manager',
+                        '24/7 priority support',
+                        'Advanced AI & machine learning',
+                        'Custom reporting & analytics',
+                        'API access & white-labeling',
+                        'Compliance & security audits',
+                        'Multi-location support',
+                        'Advanced workflow orchestration'
+                    ],
                     timeline: '8-12 weeks',
-                    ideal: 'Enterprise-grade solution'
+                    ideal: 'Large enterprises with complex needs',
+                    savings: 'Up to $8,000/month',
+                    popular: false
                 }
             ];
             
             tiers.forEach((tier, index) => {
                 const card = document.createElement('div');
-                card.className = `border-2 rounded-xl p-6 card-hover ${index === 1 ? 'border-aethelo-orange bg-orange-50' : 'border-gray-200'}`;
+                const isPopular = tier.popular;
                 
-                card.innerHTML = `
-                    <div class="text-center mb-6">
-                        <h4 class="text-xl font-bold text-aethelo-dark mb-2">${tier.name}</h4>
-                        <p class="text-2xl font-bold text-aethelo-orange">${tier.price}</p>
-                        <p class="text-sm text-gray-600 mt-1">${tier.ideal}</p>
+                card.className = `relative ${isPopular ? 'border-2 border-aethelo-orange bg-gradient-to-br from-orange-50 to-yellow-50 scale-105 shadow-2xl' : 'border border-gray-200 bg-white'} rounded-2xl p-8 card-hover animate-slide-up`;
+                card.style.animationDelay = `${index * 0.2}s`;
+                
+                if (isPopular) {
+                    card.innerHTML += `
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-gradient-to-r from-aethelo-orange to-aethelo-blue text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                                <i class="fas fa-star mr-1"></i>MOST POPULAR
+                            </span>
+                        </div>
+                    `;
+                }
+                
+                card.innerHTML += `
+                    <div class="text-center mb-8">
+                        <h4 class="text-2xl font-bold text-aethelo-dark mb-1">${tier.name}</h4>
+                        <p class="text-sm text-gray-600 mb-4">${tier.subtitle}</p>
+                        <div class="mb-4">
+                            <div class="text-3xl font-bold ${isPopular ? 'text-aethelo-orange' : 'text-aethelo-blue'}">${tier.price}</div>
+                            <div class="text-sm text-gray-500 mt-1">Save 20% with annual: ${tier.yearlyPrice}</div>
+                        </div>
+                        <p class="text-sm text-gray-600 italic">${tier.ideal}</p>
                     </div>
-                    <ul class="space-y-2 mb-6">
-                        ${tier.features.map(feature => 
-                            `<li class="flex items-center text-sm text-gray-700">
-                                <i class="fas fa-check text-green-500 mr-2"></i>${feature}
-                            </li>`
-                        ).join('')}
-                    </ul>
-                    <div class="border-t pt-4">
-                        <p class="text-sm text-gray-600 mb-2">
-                            <i class="fas fa-clock mr-1"></i>Timeline: ${tier.timeline}
-                        </p>
-                        <p class="text-xs text-gray-500">
-                            * Pricing is non-binding and subject to final scope assessment
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-green-800">Estimated Savings:</span>
+                                <span class="text-lg font-bold text-green-600">${tier.savings}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            ${tier.features.map(feature => `
+                                <div class="flex items-start space-x-3">
+                                    <i class="far fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                                    <span class="text-sm text-gray-700">${feature}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="border-t pt-6 space-y-4">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600 flex items-center">
+                                <i class="fas fa-clock mr-2"></i>Implementation:
+                            </span>
+                            <span class="font-semibold text-gray-800">${tier.timeline}</span>
+                        </div>
+                        
+                        <button class="w-full ${isPopular ? 'bg-gradient-to-r from-aethelo-orange to-aethelo-blue' : 'bg-gradient-to-r from-aethelo-blue to-aethelo-purple'} text-white py-4 rounded-xl font-bold hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+                            <i class="fas fa-rocket mr-2"></i>Get Started with ${tier.name}
+                        </button>
+                        
+                        <p class="text-xs text-gray-500 text-center">
+                            <i class="fas fa-shield-alt mr-1"></i>No long-term contract • Cancel anytime • 30-day money-back guarantee
                         </p>
                     </div>
                 `;
@@ -578,83 +1556,169 @@
             });
         }
 
-        // Project Phase Management
+        // Enhanced Notification System
+        function showNotification(message, type = 'success', duration = 3000) {
+            const notification = document.getElementById('notification');
+            const title = document.getElementById('notification-title');
+            const messageEl = document.getElementById('notification-message');
+            const icon = notification.querySelector('i');
+            const iconContainer = notification.querySelector('.w-8');
+            
+            // Set content
+            messageEl.textContent = message;
+            
+            // Set type-specific styling
+            if (type === 'success') {
+                title.textContent = 'Success!';
+                iconContainer.className = 'w-8 h-8 bg-green-500 rounded-full flex items-center justify-center';
+                icon.className = 'fas fa-check text-white text-sm';
+            } else if (type === 'error') {
+                title.textContent = 'Error';
+                iconContainer.className = 'w-8 h-8 bg-red-500 rounded-full flex items-center justify-center';
+                icon.className = 'fas fa-times text-white text-sm';
+            } else if (type === 'info') {
+                title.textContent = 'Info';
+                iconContainer.className = 'w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center';
+                icon.className = 'fas fa-info text-white text-sm';
+            }
+            
+            // Show notification
+            notification.classList.add('show');
+            
+            // Hide after duration
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+
+        // Enhanced Project Phase Management
         function changePhase(phase) {
             currentPhase = phase;
             
-            // Update phase buttons
+            // Update phase buttons with animation
             document.querySelectorAll('.phase-btn').forEach(btn => {
-                btn.classList.remove('bg-aethelo-orange', 'text-white');
+                btn.classList.remove('bg-aethelo-orange', 'text-white', 'shadow-lg');
                 btn.classList.add('bg-gray-200', 'text-gray-700');
             });
             
-            document.getElementById(`phase-${phase}`).classList.remove('bg-gray-200', 'text-gray-700');
-            document.getElementById(`phase-${phase}`).classList.add('bg-aethelo-orange', 'text-white');
+            const activeBtn = document.getElementById(`phase-${phase}`);
+            activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+            activeBtn.classList.add('bg-aethelo-orange', 'text-white', 'shadow-lg');
             
-            // Update phase description
+            // Update phase description with enhanced details
             const descriptions = {
-                discovery: "We're gathering requirements and mapping your current processes to identify automation opportunities.",
-                build: "Our team is developing and configuring your automation workflows based on the discovery findings.",
-                pilot: "We're running a controlled test of your automation with real data to validate performance and reliability.",
-                iterate: "Based on pilot results, we're refining and optimizing your automation for full deployment."
+                discovery: "We're conducting comprehensive requirements gathering and process mapping to identify automation opportunities. This phase includes stakeholder interviews, current-state analysis, and ROI projections.",
+                build: "Our development team is creating and configuring your automation workflows based on discovery findings. This includes system integrations, custom logic development, and initial testing phases.",
+                pilot: "We're running a controlled pilot test with real data to validate performance, reliability, and user adoption. All metrics are being monitored closely for optimization opportunities.",
+                iterate: "Based on pilot results and user feedback, we're refining and optimizing your automation for full-scale deployment. This includes performance tuning and additional feature development."
             };
             
             document.getElementById('phase-description').textContent = descriptions[phase];
             
-            // Update KPIs based on phase
+            // Update KPIs with enhanced phase-specific data
             updateKPIsForPhase(phase);
+            
+            // Show phase change notification
+            showNotification(`Project phase changed to ${phase.charAt(0).toUpperCase() + phase.slice(1)}`, 'info');
         }
 
         function updateKPIsForPhase(phase) {
-            const kpis = {
-                discovery: { runs: 0, timeSaved: '0h', errorRate: 'N/A' },
-                build: { runs: 23, timeSaved: '3.2h', errorRate: '2.1%' },
-                pilot: { runs: 89, timeSaved: '12.5h', errorRate: '0.8%' },
-                iterate: { runs: 127, timeSaved: '18.5h', errorRate: '0.3%' }
+            const kpiData = {
+                discovery: { 
+                    runs: 0, 
+                    timeSaved: '0h', 
+                    errorRate: 'N/A', 
+                    costSavings: '$0',
+                    trend: { runs: 0, time: 0, error: 0, cost: 0 }
+                },
+                build: { 
+                    runs: 23, 
+                    timeSaved: '3.2h', 
+                    errorRate: '2.1%', 
+                    costSavings: '$450',
+                    trend: { runs: '+15%', time: '+25%', error: '-10%', cost: '+30%' }
+                },
+                pilot: { 
+                    runs: 89, 
+                    timeSaved: '12.5h', 
+                    errorRate: '0.8%', 
+                    costSavings: '$1.8K',
+                    trend: { runs: '+35%', time: '+45%', error: '-60%', cost: '+75%' }
+                },
+                iterate: { 
+                    runs: 127, 
+                    timeSaved: '18.5h', 
+                    errorRate: '0.3%', 
+                    costSavings: '$3.2K',
+                    trend: { runs: '+12%', time: '+8%', error: '-5%', cost: '+15%' }
+                }
             };
             
-            const phaseData = kpis[phase];
-            document.getElementById('runs-per-day').textContent = phaseData.runs;
-            document.getElementById('time-saved').textContent = phaseData.timeSaved;
-            document.getElementById('error-rate').textContent = phaseData.errorRate;
+            const data = kpiData[phase];
+            document.getElementById('runs-per-day').textContent = data.runs;
+            document.getElementById('time-saved').textContent = data.timeSaved;
+            document.getElementById('error-rate').textContent = data.errorRate;
+            document.getElementById('cost-savings').textContent = data.costSavings;
         }
 
-        // Task Management
+        // Enhanced Task Management
         function renderTasks() {
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
             
-            tasks.forEach(task => {
+            // Update task statistics
+            updateTaskStatistics();
+            
+            tasks.forEach((task, index) => {
                 const taskCard = document.createElement('div');
-                taskCard.className = 'border border-gray-200 rounded-lg p-4 flex items-center justify-between';
+                taskCard.className = 'task-item bg-white border border-gray-200 rounded-xl p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-all';
+                taskCard.style.animationDelay = `${index * 0.1}s`;
                 
                 const statusColors = {
-                    'completed': 'bg-green-100 text-green-800',
-                    'in-progress': 'bg-blue-100 text-blue-800',
-                    'todo': 'bg-gray-100 text-gray-800'
+                    'completed': 'bg-green-100 text-green-800 border-green-200',
+                    'in-progress': 'bg-blue-100 text-blue-800 border-blue-200',
+                    'todo': 'bg-gray-100 text-gray-800 border-gray-200'
                 };
                 
                 const statusIcons = {
-                    'completed': 'fas fa-check-circle',
-                    'in-progress': 'fas fa-clock',
-                    'todo': 'fas fa-circle'
+                    'completed': 'fas fa-check-circle text-green-500',
+                    'in-progress': 'fas fa-clock text-blue-500',
+                    'todo': 'far fa-circle text-gray-400'
                 };
                 
+                const priorityColors = {
+                    'high': 'border-l-red-500',
+                    'medium': 'border-l-yellow-500',
+                    'low': 'border-l-green-500'
+                };
+                
+                taskCard.classList.add(priorityColors[task.priority]);
+                
                 taskCard.innerHTML = `
-                    <div class="flex items-center space-x-4">
-                        <button onclick="toggleTaskStatus(${task.id})" class="text-lg ${task.status === 'completed' ? 'text-green-500' : 'text-gray-400'} hover:text-aethelo-orange transition-colors">
+                    <div class="flex items-center space-x-4 flex-1">
+                        <button onclick="toggleTaskStatus(${task.id})" class="text-xl hover:scale-110 transition-transform">
                             <i class="${statusIcons[task.status]}"></i>
                         </button>
-                        <div>
-                            <h5 class="font-medium text-gray-800 ${task.status === 'completed' ? 'line-through' : ''}">${task.title}</h5>
-                            <p class="text-sm text-gray-600">Assigned to: ${task.owner} • Due: ${task.due}</p>
+                        <div class="flex-1">
+                            <h5 class="font-semibold text-gray-800 ${task.status === 'completed' ? 'line-through opacity-60' : ''}">${task.title}</h5>
+                            <div class="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                                <span class="flex items-center">
+                                    <i class="fas fa-user mr-1"></i>${task.owner}
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-calendar mr-1"></i>${formatDate(task.due)}
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-flag mr-1"></i>${task.priority} priority
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColors[task.status]}">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold border ${statusColors[task.status]}">
                             ${task.status.replace('-', ' ').toUpperCase()}
                         </span>
-                        <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 transition-colors">
+                        <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 hover:scale-110 transition-all p-2">
                             <i class="fas fa-trash text-sm"></i>
                         </button>
                     </div>
@@ -664,28 +1728,86 @@
             });
         }
 
+        function updateTaskStatistics() {
+            const totalTasks = tasks.length;
+            const completedTasks = tasks.filter(t => t.status === 'completed').length;
+            const progressTasks = tasks.filter(t => t.status === 'in-progress').length;
+            const todoTasks = tasks.filter(t => t.status === 'todo').length;
+            
+            document.getElementById('total-tasks').textContent = totalTasks;
+            document.getElementById('completed-tasks').textContent = completedTasks;
+            document.getElementById('progress-tasks').textContent = progressTasks;
+            document.getElementById('todo-tasks').textContent = todoTasks;
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
         function toggleTaskStatus(taskId) {
             const task = tasks.find(t => t.id === taskId);
             if (task) {
                 const statusCycle = { 'todo': 'in-progress', 'in-progress': 'completed', 'completed': 'todo' };
                 task.status = statusCycle[task.status];
                 renderTasks();
+                showNotification(`Task "${task.title}" status updated to ${task.status.replace('-', ' ')}`, 'success');
             }
         }
 
         function deleteTask(taskId) {
-            tasks = tasks.filter(t => t.id !== taskId);
-            renderTasks();
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            if (taskIndex > -1) {
+                const taskTitle = tasks[taskIndex].title;
+                tasks.splice(taskIndex, 1);
+                renderTasks();
+                showNotification(`Task "${taskTitle}" deleted successfully`, 'info');
+            }
         }
 
+        function filterTasks(status) {
+            const allTasks = document.querySelectorAll('.task-item');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            // Update filter button styles
+            filterBtns.forEach(btn => {
+                btn.classList.remove('bg-aethelo-orange', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            
+            event.target.classList.remove('bg-gray-100', 'text-gray-700');
+            event.target.classList.add('bg-aethelo-orange', 'text-white');
+            
+            // Filter tasks
+            allTasks.forEach((taskEl, index) => {
+                const task = tasks[index];
+                if (status === 'all' || task.status === status) {
+                    taskEl.style.display = 'flex';
+                } else {
+                    taskEl.style.display = 'none';
+                }
+            });
+        }
+
+        // Enhanced Modal Management
         function showAddTaskModal() {
-            document.getElementById('add-task-modal').classList.remove('hidden');
-            document.getElementById('add-task-modal').classList.add('flex');
+            const modal = document.getElementById('add-task-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Set default due date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('task-due').value = tomorrow.toISOString().split('T')[0];
         }
 
         function hideAddTaskModal() {
-            document.getElementById('add-task-modal').classList.add('hidden');
-            document.getElementById('add-task-modal').classList.remove('flex');
+            const modal = document.getElementById('add-task-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
             document.getElementById('add-task-form').reset();
         }
 
@@ -695,31 +1817,34 @@
             const title = document.getElementById('task-title').value;
             const owner = document.getElementById('task-owner').value;
             const due = document.getElementById('task-due').value;
+            const priority = document.getElementById('task-priority').value;
             
             const newTask = {
                 id: Math.max(...tasks.map(t => t.id)) + 1,
                 title,
                 owner,
                 due,
+                priority,
                 status: 'todo'
             };
             
             tasks.push(newTask);
             renderTasks();
             hideAddTaskModal();
+            showNotification(`Task "${title}" added successfully`, 'success');
         });
 
-        // Admin Functions
+        // Enhanced Admin Functions
         function resetSeedData() {
             tasks = [
-                { id: 1, title: 'Requirements gathering session', owner: 'Sarah Chen', due: '2024-02-15', status: 'completed' },
-                { id: 2, title: 'Process mapping workshop', owner: 'Mike Johnson', due: '2024-02-18', status: 'completed' },
-                { id: 3, title: 'Technical architecture review', owner: 'Alex Rodriguez', due: '2024-02-22', status: 'in-progress' },
-                { id: 4, title: 'Integration planning', owner: 'Sarah Chen', due: '2024-02-25', status: 'todo' },
-                { id: 5, title: 'Security assessment', owner: 'David Kim', due: '2024-02-28', status: 'todo' },
-                { id: 6, title: 'User interface mockups', owner: 'Emma Wilson', due: '2024-03-02', status: 'todo' },
-                { id: 7, title: 'Database schema design', owner: 'Alex Rodriguez', due: '2024-03-05', status: 'todo' },
-                { id: 8, title: 'API documentation', owner: 'Mike Johnson', due: '2024-03-08', status: 'todo' }
+                { id: 1, title: 'Requirements gathering session', owner: 'Sarah Chen', due: '2024-02-15', status: 'completed', priority: 'high' },
+                { id: 2, title: 'Process mapping workshop', owner: 'Mike Johnson', due: '2024-02-18', status: 'completed', priority: 'medium' },
+                { id: 3, title: 'Technical architecture review', owner: 'Alex Rodriguez', due: '2024-02-22', status: 'in-progress', priority: 'high' },
+                { id: 4, title: 'Integration planning', owner: 'Sarah Chen', due: '2024-02-25', status: 'todo', priority: 'medium' },
+                { id: 5, title: 'Security assessment', owner: 'David Kim', due: '2024-02-28', status: 'todo', priority: 'high' },
+                { id: 6, title: 'User interface mockups', owner: 'Emma Wilson', due: '2024-03-02', status: 'todo', priority: 'low' },
+                { id: 7, title: 'Database schema design', owner: 'Alex Rodriguez', due: '2024-03-05', status: 'todo', priority: 'medium' },
+                { id: 8, title: 'API documentation', owner: 'Mike Johnson', due: '2024-03-08', status: 'todo', priority: 'low' }
             ];
             
             currentPhase = 'discovery';
@@ -727,27 +1852,333 @@
             renderTasks();
             
             document.getElementById('last-reset').textContent = new Date().toLocaleString();
-            
-            alert('Seed data has been reset successfully!');
+            showNotification('All demo data has been reset successfully!', 'success');
         }
 
         function updateKPIs() {
             const runs = Math.floor(Math.random() * 200) + 50;
             const timeSaved = (Math.random() * 30 + 5).toFixed(1);
             const errorRate = (Math.random() * 2).toFixed(1);
+            const costSavings = (Math.random() * 5 + 1).toFixed(1);
             
             document.getElementById('runs-per-day').textContent = runs;
             document.getElementById('time-saved').textContent = timeSaved + 'h';
             document.getElementById('error-rate').textContent = errorRate + '%';
+            document.getElementById('cost-savings').textContent = '$' + costSavings + 'K';
             
-            alert('KPIs have been updated with random values!');
+            showNotification('KPIs have been updated with new random values!', 'success');
         }
 
-        // Initialize the application
+        function generateSampleTasks() {
+            const sampleTasks = [
+                { title: 'Performance optimization review', owner: 'Sarah Chen', priority: 'high' },
+                { title: 'Client feedback analysis', owner: 'Mike Johnson', priority: 'medium' },
+                { title: 'Integration testing phase 2', owner: 'Alex Rodriguez', priority: 'high' },
+                { title: 'User training documentation', owner: 'Emma Wilson', priority: 'low' },
+                { title: 'Security compliance audit', owner: 'David Kim', priority: 'high' }
+            ];
+            
+            sampleTasks.forEach((taskData, index) => {
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + index + 1);
+                
+                const newTask = {
+                    id: Math.max(...tasks.map(t => t.id)) + index + 1,
+                    title: taskData.title,
+                    owner: taskData.owner,
+                    due: futureDate.toISOString().split('T')[0],
+                    priority: taskData.priority,
+                    status: 'todo'
+                };
+                
+                tasks.push(newTask);
+            });
+            
+            renderTasks();
+            showNotification(`${sampleTasks.length} sample tasks generated successfully!`, 'success');
+        }
+
+        function exportData() {
+            const data = {
+                tasks: tasks,
+                phase: currentPhase,
+                timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `aethelo-demo-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Demo data exported successfully!', 'success');
+        }
+
+        function generateReport() {
+            showNotification('Generating comprehensive report...', 'info');
+            
+            setTimeout(() => {
+                showNotification('Report generation complete! Check your downloads.', 'success');
+            }, 2000);
+        }
+
+        function clearLogs() {
+            showNotification('System logs cleared successfully!', 'info');
+        }
+
+        // Analytics Functions
+        let charts = {};
+
+        function initializeCharts() {
+            // Automation Runs Chart
+            const runsCtx = document.getElementById('runsChart');
+            if (runsCtx && !charts.runs) {
+                charts.runs = new Chart(runsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Automation Runs',
+                            data: [95, 112, 127, 108, 134, 89, 156],
+                            borderColor: '#FF7F32',
+                            backgroundColor: 'rgba(255, 127, 50, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Time Savings Chart
+            const savingsCtx = document.getElementById('savingsChart');
+            if (savingsCtx && !charts.savings) {
+                charts.savings = new Chart(savingsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Hours Saved',
+                            data: [12.5, 16.2, 18.5, 21.3],
+                            backgroundColor: 'rgba(64, 224, 208, 0.8)',
+                            borderColor: '#40E0D0',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Error Rate Chart
+            const errorCtx = document.getElementById('errorChart');
+            if (errorCtx && !charts.error) {
+                charts.error = new Chart(errorCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Error Rate %',
+                            data: [2.1, 1.8, 1.2, 0.8, 0.5, 0.3],
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 3,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Cost Chart
+            const costCtx = document.getElementById('costChart');
+            if (costCtx && !charts.cost) {
+                charts.cost = new Chart(costCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Labor Savings', 'Error Reduction', 'Efficiency Gains', 'Process Optimization'],
+                        datasets: [{
+                            data: [45, 25, 20, 10],
+                            backgroundColor: [
+                                '#FF7F32',
+                                '#40E0D0',
+                                '#8B5CF6',
+                                '#10B981'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function setTimeRange(range) {
+            currentTimeRange = range;
+            
+            // Update button styles
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('bg-aethelo-orange', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            
+            event.target.classList.remove('bg-gray-200', 'text-gray-700');
+            event.target.classList.add('bg-aethelo-orange', 'text-white');
+            
+            // Update charts with new data (simulated)
+            updateChartsData(range);
+            showNotification(`Analytics updated for ${range} period`, 'info');
+        }
+
+        function updateChartsData(range) {
+            // Simulate different data for different time ranges
+            const dataMap = {
+                '7d': {
+                    runs: [95, 112, 127, 108, 134, 89, 156],
+                    savings: [12.5, 16.2, 18.5, 21.3]
+                },
+                '30d': {
+                    runs: [89, 103, 98, 127, 134, 142, 156, 134, 145, 132, 129, 138, 147, 152, 149, 143, 156, 162, 158, 164, 171, 168, 175, 179, 182, 186, 189, 193, 196, 198],
+                    savings: [45.2, 52.8, 61.3, 68.7]
+                },
+                '90d': {
+                    runs: Array.from({length: 90}, (_, i) => Math.floor(Math.random() * 100) + 80),
+                    savings: [142.5, 156.2, 168.5, 181.3, 195.7, 208.4, 221.8, 235.2, 248.9, 262.3, 275.8, 289.1]
+                }
+            };
+            
+            if (charts.runs) {
+                const newData = dataMap[range];
+                charts.runs.data.datasets[0].data = newData.runs.slice(-7); // Show last 7 days
+                charts.runs.update();
+            }
+        }
+
+        // Utility Functions
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Add real-time validation to form fields
         document.addEventListener('DOMContentLoaded', function() {
+            const formFields = document.querySelectorAll('#intake-form input, #intake-form select');
+            formFields.forEach(field => {
+                field.addEventListener('blur', () => validateField(field));
+                field.addEventListener('input', () => {
+                    if (field.classList.contains('field-error')) {
+                        validateField(field);
+                    }
+                });
+            });
+            
+            // Initialize the application
             renderTasks();
             changePhase('discovery');
+            
+            // Add tooltips to elements with data-tooltip
+            document.querySelectorAll('[data-tooltip]').forEach(element => {
+                element.addEventListener('mouseenter', showTooltip);
+                element.addEventListener('mouseleave', hideTooltip);
+            });
         });
+
+        function showTooltip(event) {
+            const tooltip = document.getElementById('tooltip');
+            const text = event.target.getAttribute('data-tooltip');
+            
+            tooltip.textContent = text;
+            tooltip.style.opacity = '1';
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY - 30 + 'px';
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.opacity = '0';
+        }
+
     </script>
 </body>
 </html>
